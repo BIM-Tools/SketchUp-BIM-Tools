@@ -1,11 +1,7 @@
-# Show the Ruby Console at startup so we can see any programming errors we may make.
-#Sketchup.send_action "showRubyPanel:"
-
 # First we pull in the standard API hooks.
 require 'sketchup.rb'
-#require 'walls_from_selection.rb'
 
-# Add a menu item to launch Walls plugin.
+# Add a menu item to launch BIM Tools webdialog.
 UI.menu("PlugIns").add_item("BIM Tools") {
   bt_window
 }
@@ -18,7 +14,6 @@ def bt_window
 	pathname = File.join( pathname, 'bt_window.html' )
 	dialog.set_file( pathname )
 	
-	#dialog.set_file "bt_window.html"
 	dialog.show
 	dialog.add_action_callback("walls_from_selection") {|dialog, params|
 	  wall_height = dialog.get_element_value("height")
