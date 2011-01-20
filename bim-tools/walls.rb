@@ -28,7 +28,7 @@ def bt_window
 	dialog = UI::WebDialog.new
 	
 	pathname = File.expand_path( File.dirname(__FILE__) )
-	pathname = File.join( pathname, 'bt_window.html' )
+	pathname = File.join( pathname, 'bt-window.html' )
 	dialog.set_file( pathname )
 	
 	dialog.show
