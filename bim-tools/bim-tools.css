@@ -41,6 +41,7 @@ input {
   padding: 3px;
 }
 .submit {
+  font-size: 11px;
   width: 100%;
   margin: 6px;
 }
