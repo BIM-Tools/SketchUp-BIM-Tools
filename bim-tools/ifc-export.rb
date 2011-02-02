@@ -28,8 +28,8 @@ def ifc_export
 	# IFC info
 	author = "Architect"
 	organization = "Building Designer Office"
-	preprocessor_version = "IFC Engine DLL version 1.02 beta"
-	originating_system = "IFC Engine DLL version 1.02 beta"
+	preprocessor_version = "SU2IFC01"
+	originating_system = "SU2IFC01"
 	authorization = "The authorising person"
 	project_id = "323HSLe65A8OTgoXnDKFTH"
 	project_name = "Default Project"
