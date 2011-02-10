@@ -16,3 +16,4 @@
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 require 'bim-tools\walls.rb'
+require 'bim-tools\IFCexporter.rb'
