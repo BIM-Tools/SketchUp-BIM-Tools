@@ -1,4 +1,4 @@
-#       bimtools.rb
+#       config.rb
 #       
 #       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
 #       
@@ -22,6 +22,7 @@ author = "Architect"
 organization = "Building Designer Office"
 project_name = "Default Project"
 project_description = "Description of Default Project"
+ifc_owner_creation_date = "1219699467"
 ifc_person_id = "ID001"
 ifc_person_familyname = "Lastname"
 ifc_person_givenname = "Firstname"
