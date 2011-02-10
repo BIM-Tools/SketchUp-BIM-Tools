@@ -1,4 +1,4 @@
-#       ifc-export.rb
+#       IFCexporter.rb
 #       
 #       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
 #       
