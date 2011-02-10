@@ -72,6 +72,16 @@ class Wall
     group = geometry(slice_planes_start, slice_planes_end, parallel_lines, wall_height)
     group.transform! edge_transformation
     
+    #create attribute dictionary for group
+    group.set_attribute "ifc", "ifc_element", "IfcWallStandardCase"
+    group.set_attribute "ifc", "length", base_edge.length
+    group.set_attribute "ifc", "width", wall_width
+    group.set_attribute "ifc", "height", wall_height
+    
+    #add group to ifc_layer
+     layer = Sketchup.active_model.layers.add "ifcWall"
+     group.layer = layer
+     
   end
   def wall_slice_planes(edge_end_vertex, base_edge, edge_transformation)
     connected_edges = edge_end_vertex.edges
@@ -165,8 +175,12 @@ class Wall
     group = entities.add_group # Add the group to the entities in the model
     group_entities = group.entities # Get the entities within the group
     face = group_entities.add_face points_array # Add a face to the group based on the calculated points
+    
     height = wall_height.to_f.mm
     face.pushpull -height, true
+    
+    face.set_attribute "ifc", "ifc_construct", "IfcArea"
+    face.reverse!
     return group
   end
 end
