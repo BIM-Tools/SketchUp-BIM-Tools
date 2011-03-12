@@ -30,11 +30,17 @@
     <h1>Wall settings</h1>
     <hr />
     <form action="skp:walls_from_selection@true">
-    <div id="input-block">
-      <span class="input">Height:</span><input type="text" name="height" value="2600" /><br />
-      <span class="input">Width:</span><input type="text" name="width" value="100" />
-    </div>
-    <input class="submit" type="submit" name="submit" value="Walls from edges" />
+      <div id="input-block">
+        <span class="input">Height:</span><input type="text" name="height" value="2600" /><br />
+        <span class="input">Width:</span><input type="text" name="width" value="100" />
+      </div>
+      <input class="submit" type="submit" name="submit" value="Walls from selection" />
+    </form>
+    <hr />
+    <h1>IFC Export</h1>
+    <form action="skp:ifcexporter@true">
+      <input class="submit" type="submit" name="submit" value="Export to IFC" />
+      <!--<input type="checkbox" name="autosave" value="0" />Autosave as IFC-->
     </form>
     <script language="javascript">
   </body>

@@ -37,6 +37,9 @@ def bt_window
 	  wall_width = dialog.get_element_value("width")
 	  walls_from_selection(wall_width, wall_height)
 	}
+	dialog.add_action_callback("ifcexporter") {|dialog, params|
+	  ifcexporter()
+	}
 end
 
 def walls_from_selection(wall_width, wall_height) # Create new wall objects from selection.
