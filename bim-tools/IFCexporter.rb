@@ -378,8 +378,8 @@ end
 ###
 
 ### add menu item etc #####################################################
-if not file_loaded?(File.basename(__FILE__))
-	UI.menu("PlugIns").add_item("IFCexporter..."){IFCexporter.new()}
-end#if
-file_loaded(File.basename(__FILE__))
+#if not file_loaded?(File.basename(__FILE__))
+#	UI.menu("PlugIns").add_item("IFCexporter..."){IFCexporter.new()}
+#end#if
+#file_loaded(File.basename(__FILE__))
 ###
