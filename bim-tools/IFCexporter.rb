@@ -205,6 +205,7 @@ class IFCexporter
 		
 			# wall properties
 			wall_width = sprintf('%.6f', su_width.to_f).sub(/0{1,6}$/, '')#hoort hier de conversion bij de wall of export functie???
+			wall_offset = sprintf('%.6f', (su_width.to_f/2*-1)).sub(/0{1,6}$/, '')
 			wall_length = sprintf('%.6f', su_length.to_f.to_mm).sub(/0{1,6}$/, '')
 			wall_height = sprintf('%.6f', su_height.to_f).sub(/0{1,6}$/, '')
 			grossSideArea = sprintf('%.6f', su_height.to_f * wall_length.to_f / 1000000).sub(/0{1,6}$/, '') # "11.500" opp zijkant
@@ -320,9 +321,9 @@ class IFCexporter
 			@export_content << "#" + id_27 + " = IFCQUANTITYAREA('GrossFootprintArea', 'GrossFootprintArea', $, " + grossFootprintArea + ");"
 			@export_content << "#" + id_28 + " = IFCRELDEFINESBYPROPERTIES('" + random_string + "', #2, $, $, (#" + id_00 + "), #" + id_19 + ");"
 			@export_content << "#" + id_29 + " = IFCRELASSOCIATESMATERIAL('" + random_string + "', #2, $, $, (#" + id_00 + "), #" + id_30 + ");"
-			@export_content << "#" + id_30 + " = IFCMATERIALLAYERSETUSAGE(#" + id_31 + ", .AXIS2., .POSITIVE., -150.);"
+			@export_content << "#" + id_30 + " = IFCMATERIALLAYERSETUSAGE(#" + id_31 + ", .AXIS2., .POSITIVE., " + wall_offset + ");"
 			@export_content << "#" + id_31 + " = IFCMATERIALLAYERSET((#" + id_32 + "), $);"
-			@export_content << "#" + id_32 + " = IFCMATERIALLAYER(#" + id_33 + ", 300., $);"
+			@export_content << "#" + id_32 + " = IFCMATERIALLAYER(#" + id_33 + ", " + wall_width + ", $);"
 			@export_content << "#" + id_33 + " = IFCMATERIAL('" + wall_material + "');"
 			@export_content << "#" + id_34 + " = IFCSHAPEREPRESENTATION(#20, 'Axis', 'Curve2D', (#" + id_35 + "));"
 			@export_content << "#" + id_35 + " = IFCPOLYLINE((#" + id_36 + ", #" + id_37 + "));"
