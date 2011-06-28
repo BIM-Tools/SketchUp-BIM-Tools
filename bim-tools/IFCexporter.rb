@@ -28,7 +28,19 @@ class IFCexporter
 			@title=@model.title
 			@skpName=@title
 			@selection=@model.selection
-			self.export()
+      @aExport = Array.new #Array will contain all objects from the selection that can be exported
+      
+      check = 0 # as long as chech = 0, no exportable objects have been found
+      @selection.each { |i| 
+        if i.attribute_dictionary "ifc"
+          @aExport << i
+          check = 1
+        end
+      }
+			if check == 1 #if exportable objects have been found, start exporter
+				self.export()
+			end
+			
 	end
 
 	def export
@@ -165,7 +177,7 @@ class IFCexporter
 
 
 		# loop function for creating walls
-		@selection.each { |wall|
+		@aExport.each { |wall|
 			
 			if wall.material == nil
 				wall_material = "Default material"
