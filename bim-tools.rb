@@ -1,4 +1,4 @@
-#       bimtools.rb
+#       bim-tools.rb
 #       
 #       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
 #       
@@ -15,5 +15,29 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'bim-tools\walls.rb'
-require 'bim-tools\IFCexporter.rb'
+module FreeBuilder  # <-- Main project namespace
+  module Bim_Tools  # <-- BIM project namespace
+
+		# First we pull in the standard API hooks.
+		require 'sketchup.rb'
+
+    #Create webdialog with BIM tools
+    def self.bt_window()
+    	require 'bim-tools\bt_dialog.rb'
+			window = Bt_dialog.new
+    end
+		
+		#fill all ifc settings with default values
+    def self.defaults()
+    	require 'bim-tools\defaults.rb'
+			Set_defaults.new
+    end
+    
+    # Add a menu item to launch BIM Tools webdialog.
+		UI.menu("PlugIns").add_item("BIM Tools") {
+			FreeBuilder::Bim_Tools::defaults
+			FreeBuilder::Bim_Tools::bt_window
+		}
+
+  end
+end
