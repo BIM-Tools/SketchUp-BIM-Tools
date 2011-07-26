@@ -17,18 +17,19 @@
 
 # Configuration file for personal settings
 
-# IFC info
-author = "Architect"
-organization = "Building Designer Office"
-project_name = "Default Project"
-project_description = "Description of Default Project"
-ifc_owner_creation_date = "1219699467"
-ifc_person_id = "ID001"
-ifc_person_familyname = "Lastname"
-ifc_person_givenname = "Firstname"
-ifc_organisation_name = "Company"
-ifc_organisation_description = "Company description"
-ifc_site_name = "Default Site"
-ifc_site_description = "Description of Default Site"
-ifc_building_name = "Default Building"
-ifc_building_description = "Description of Default Building"
+module Bt_Config
+	Author = "Architect"
+	Organization = "Building Designer Office"
+	Project_name = "Default Project"
+	Project_description = "Description of Default Project"
+	Owner_creation_date = "1219699467"
+	Person_id = "ID001"
+	Person_familyname = "Lastname"
+	Person_givenname = "Firstname"
+	Organisation_name = "Company"
+	Organisation_description = "Company description"
+	Site_name = "Default Site"
+	Site_description = "Description of Default Site"
+	Building_name = "Default Building"
+	Building_description = "Description of Default Building"
+end

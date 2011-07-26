@@ -45,6 +45,7 @@ class IFCexporter
 
 	def export
 	  Sketchup.set_status_text("IFCExporter: Exporting IFC entities...")
+	  model = Sketchup.active_model
 		@ifc_="true"
         @ifc_name=@skpName
         @ifc_name=@ifc_name+".ifc"
@@ -59,41 +60,41 @@ class IFCexporter
     end
 		
 		# IFC info, needs to be editable from sketchup
-		author = "Architect"
-		organization = "Building Designer Office"
+		author = model.get_attribute "ifc", "author", "Architect"
+		organization = model.get_attribute "ifc", "organization", "Building Designer Office"
 		preprocessor_version = "SU2IFC01"
 		originating_system = "SU2IFC01"
-		authorization = "The authorising person"
-		project_id = random_string
-		project_name = @model.title
-		project_description = @model.description
+		authorization = model.get_attribute "ifc", "authorization", "The authorising person"
+		project_id = model.get_attribute "ifc", "project_id", random_string
+		project_name = model.get_attribute "ifc", "project_name", "Default Project"
+		project_description = model.get_attribute "ifc", "project_description", "Description of Default Project"
 		owner_creation_date = "1296506003"
-		person_id = "ID001"
-		person_familyname = "Lastname"
-		person_givenname = "Firstname"
-		organisation_name = "Company"
-		organisation_description = "Company description"
+		person_id = model.get_attribute "ifc", "person_id", "ID001"
+		person_familyname = model.get_attribute "ifc", "person_familyname", "Lastname"
+		person_givenname = model.get_attribute "ifc", "person_givenname", "Firstname"
+		organisation_name = model.get_attribute "ifc", "organisation_name", "Company"
+		organisation_description = model.get_attribute "ifc", "organisation_description", "Company description"
 		application_version = "0.01"
 		application_name = "SU2IFC"
 		application_identifier = "SU2IFC01"
-		site_id = random_string
-		site_name = "Default Site"
-		site_description = "Description of Default Site"
-		building_id = random_string
-		building_name = "Default Building"
-		building_description = "Description of Default Building"
+		site_id = model.get_attribute "ifc", "site_id", random_string
+		site_name = model.get_attribute "ifc", "site_name", "Default Site"
+		site_description = model.get_attribute "ifc", "site_description", "Description of Default Site"
+		building_id = model.get_attribute "ifc", "building_id", random_string
+		building_name = model.get_attribute "ifc", "building_name", "Default Building"
+		building_description = model.get_attribute "ifc", "building_description", "Description of Default Building"
 		buildingstorey_id = random_string
 		buildingstorey_name = "Default Building Storey"
 		buildingstorey_description = "Description of Default Building Storey"
-		buildingcontainer_id = random_string
-		buildingcontainer_name = "BuildingContainer"
-		buildingcontainer_description = "BuildingContainer for BuildingStories"
-		sitecontainer_id = random_string
-		sitecontainer_name = "SiteContainer"
-		sitecontainer_description = "SiteContainer For Buildings"
-		projectcontainer_id = random_string
-		projectcontainer_name = "ProjectContainer"
-		projectcontainer_description = "ProjectContainer for Sites"
+		buildingcontainer_id = model.get_attribute "ifc", "buildingcontainer_id", random_string
+		buildingcontainer_name = model.get_attribute "ifc", "buildingcontainer_name", "BuildingContainer"
+		buildingcontainer_description = model.get_attribute "ifc", "buildingcontainer_description", "BuildingContainer for BuildingStories"
+		sitecontainer_id = model.get_attribute "ifc", "sitecontainer_id", random_string
+		sitecontainer_name = model.get_attribute "ifc", "sitecontainer_name", "SiteContainer"
+		sitecontainer_description = model.get_attribute "ifc", "sitecontainer_description", "SiteContainer For Buildings"
+		projectcontainer_id = model.get_attribute "ifc", "projectcontainer_id", random_string
+		projectcontainer_name = model.get_attribute "ifc", "projectcontainer_name", "ProjectContainer"
+		projectcontainer_description = model.get_attribute "ifc", "projectcontainer_description", "ProjectContainer for Sites"
 		buildingstoreycontainer_id = random_string
 		buildingstoreycontainer_name = "Default Building"
 		buildingstoreycontainer_description = "Contents of Building Storey"
@@ -220,11 +221,12 @@ class IFCexporter
 			wall_offset = sprintf('%.6f', (su_width.to_f/2*-1)).sub(/0{1,6}$/, '')
 			wall_length = sprintf('%.6f', su_length.to_f.to_mm).sub(/0{1,6}$/, '')
 			wall_height = sprintf('%.6f', su_height.to_f).sub(/0{1,6}$/, '')
-			grossSideArea = sprintf('%.6f', su_height.to_f * wall_length.to_f / 1000000).sub(/0{1,6}$/, '') # "11.500" opp zijkant
-			netSideArea = sprintf('%.6f', (su_height.to_f * wall_length.to_f / 1000000 / 1.1).to_f).sub(/0{1,6}$/, '') # "10.450" #opp zijkant - 10%?
-			grossVolume = sprintf('%.6f', (su_height.to_f * wall_length.to_f * wall_width.to_f / 1000000000).to_f).sub(/0{1,6}$/, '') # "3.450" volume. Should be height * surface(not width/length).
-			netVolume = sprintf('%.6f', (su_height.to_f * wall_length.to_f * wall_width.to_f / 1000000000 / 1.1).to_f).sub(/0{1,6}$/, '') # "3.135" #volume - 10%?
-			grossFootprintArea = sprintf('%.6f', (wall_length.to_f * wall_width.to_f / 1000000).to_f).sub(/0{1,6}$/, '') # "1.500" Should be surface(not width*length).
+			grossSideArea = sprintf('%.6f', su_height.to_f * wall_length.to_f / 1000000).sub(/0{1,6}$/, '') # Area of the wall as viewed by an elevation view of the middle plane of the wall.  It does not take into account any wall modifications (such as openings).
+			netSideArea = sprintf('%.6f', su_height.to_f * wall_length.to_f / 1000000).sub(/0{1,6}$/, '') # Area of the wall as viewed by an elevation view of the middle plane. It does take into account all wall modifications (such as openings).
+			grossVolume = sprintf('%.6f', su_height.to_f * wall_length.to_f * wall_width.to_f / 1000000000).sub(/0{1,6}$/, '') # Should be height * surface(not width/length). Volume of the wall, without taking into account the openings and the connection geometry.
+			netVolume = sprintf('%.6f', su_height.to_f * wall_length.to_f * wall_width.to_f / 1000000000).sub(/0{1,6}$/, '') # (include endcaps) Volume of the wall, after subtracting the openings and after considering the connection geometry.
+			grossFootprintArea = sprintf('%.6f', (wall_length.to_f * wall_width.to_f / 1000000).to_f).sub(/0{1,6}$/, '') # (include endcaps) Area of the wall as viewed by a ground floor view, not taking any wall modifications (like recesses) into account. It is also referred to as the foot print of the wall.
+			# netFootprintArea = sprintf('%.6f', (wall_length.to_f * wall_width.to_f / 1000000).to_f).sub(/0{1,6}$/, '') # (include endcaps) Area of the wall as viewed by a ground floor view, taking all wall modifications (like recesses) into account. It is also referred to as the foot print of the wall.
 			shaperepresentationX1 = "0." # "150."
 			shaperepresentationX2 = "0." # "150."
 			shaperepresentationY1 = "0."
