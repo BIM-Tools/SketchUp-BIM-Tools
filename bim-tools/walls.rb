@@ -15,34 +15,8 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# First we pull in the standard API hooks.
-require 'sketchup.rb'
 
-module FreeBuilder  # <-- Main project namespace
-  module Bim_Tools  # <-- BIM project namespace
-
-    #Show webdialog with BIM tools
-    def self.bt_window()
-	    dialog = UI::WebDialog.new
-	    
-	    pathname = File.expand_path( File.dirname(__FILE__) )
-	    exporter = File.join( pathname, 'IFCexporter.rb' )
-	    pathname = File.join( pathname, 'bt-window.html' )
-	    dialog.set_file( pathname )
-	    
-	    dialog.show
-	    dialog.add_action_callback("walls_from_selection") {|dialog, params|
-	      wall_height = dialog.get_element_value("height")
-	      wall_width = dialog.get_element_value("width")
-	      walls_from_selection(wall_width, wall_height)
-	    }
-	    require exporter
-	    dialog.add_action_callback("ifcexporter") {|dialog, params|
-	      ifcexporter()
-	    }
-    end
-
-    def self.walls_from_selection(wall_width, wall_height) # Create new wall objects from selection.
+    def walls_from_selection(wall_width, wall_height) # Create new wall objects from selection.
 
       model = Sketchup.active_model
       entities = model.active_entities
@@ -187,11 +161,4 @@ module FreeBuilder  # <-- Main project namespace
 	return group
       end
     end
-  end # Bim_Tools
-end # FreeBuilder
 
-
-# Add a menu item to launch BIM Tools webdialog.
-UI.menu("PlugIns").add_item("BIM Tools") {
-  FreeBuilder::Bim_Tools::bt_window
-}
