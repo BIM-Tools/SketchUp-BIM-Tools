@@ -1,6 +1,6 @@
 #       bim-tools.rb
 #       
-#       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2011 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -18,17 +18,21 @@
 module FreeBuilder  # <-- Main project namespace
   module Bim_Tools  # <-- BIM project namespace
 
-    # First we pull in the standard API hooks.
-    require 'sketchup.rb'
+    require 'sketchup.rb' # needed here?
+    require 'bim-tools\ObjectLibrary.rb'
+    require 'bim-tools\parts\opening.rb'
 
-    # Show the Ruby Console at startup so we can
-    # see any programming errors we may make.
-    Sketchup.send_action "showRubyPanel:"
+    # Show the Ruby Console at startup
+    # Sketchup.send_action "showRubyPanel:"
+
+    # Create the bim-tools objects library, keeps track of all bim-tools objects
+    # Should this be a global???
+    lib = ObjectLibrary.new
 
     #Create webdialog with BIM tools
-    def self.bt_window()
-    	require 'bim-tools\bt_dialog.rb'
-			window = Bt_dialog.new
+    def self.bt_window(lib)
+      require 'bim-tools\bt_dialog.rb'
+      window = Bt_dialog.new(lib)
     end
 		
     #fill all ifc settings with default values
@@ -38,17 +42,17 @@ module FreeBuilder  # <-- Main project namespace
     end
     	
     #start opening observer
-    #def self.opening()
-      require 'bim-tools\opening.rb'
-      puts "test"
-      Sketchup.active_model.entities.add_observer(MyEntitiesObserver.new)
-    #end
+    Sketchup.active_model.entities.add_observer(MyEntitiesObserver.new(lib))
     
     # Add a menu item to launch BIM Tools webdialog.
-		UI.menu("PlugIns").add_item("BIM Tools") {
-			FreeBuilder::Bim_Tools::defaults
-			FreeBuilder::Bim_Tools::bt_window
-		}
+    UI.menu("PlugIns").add_item("BIM Tools") {
+      FreeBuilder::Bim_Tools::defaults
+      FreeBuilder::Bim_Tools::bt_window(lib)
+    }
+
+    # Auto launch bim-tools
+    # FreeBuilder::Bim_Tools::defaults
+    # FreeBuilder::Bim_Tools::bt_window(lib)
 
   end
 end

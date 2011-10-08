@@ -1,4 +1,4 @@
-#       erase_opening.rb
+#       ifcImport.rb - Library of methods that generate SketchUp bim-tools elements from parts of IFC code.
 #       
 #       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
 #       
@@ -15,28 +15,23 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-def erase_opening(opening, glue_surface)
-  @hole_edges = Array.new
-  
-  glue_surface.entities.each do |entity|
-    parent = opening.get_attribute "ifc", "id"
-    if entity.get_attribute("ifc", "parent") == parent
-      edge_array = entity.edges
-      # fill holes
-      edge_array.each do |edge|
-        edge.find_faces
-      end
-      edge_array.each do |edge|
-        if @hole_edges.include? edge
-        else
-          @hole_edges << edge
-        end
-      end
-    end
+
+class IfcGeneralLibrary
+	def initialize()
+    
   end
-  @hole_edges.each do |edge|
-    if edge.deleted? == false
-      edge.erase!
-    end
-  end
+
+
+
+end #class IfcImportLibrary
+
+def guid()#function returns a new IFC object ID - function has to be updated to use official Globally Unique Identifier - http://buildingsmart-tech.org/implementation/get-started/ifc-guid
+  length=22
+  chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  string = ''
+  length.times { string << chars[rand(chars.size)] }
+  return string
+end
+def set_id(group)
+  group.set_attribute "ifc", "id", guid()
 end

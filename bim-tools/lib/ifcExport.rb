@@ -1,4 +1,4 @@
-#       erase_opening.rb
+#       ifcExport.rb - Library of methods that generate parts of IFC code from SketchUp bim-tools elements
 #       
 #       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
 #       
@@ -15,28 +15,20 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-def erase_opening(opening, glue_surface)
-  @hole_edges = Array.new
-  
-  glue_surface.entities.each do |entity|
-    parent = opening.get_attribute "ifc", "id"
-    if entity.get_attribute("ifc", "parent") == parent
-      edge_array = entity.edges
-      # fill holes
-      edge_array.each do |edge|
-        edge.find_faces
-      end
-      edge_array.each do |edge|
-        if @hole_edges.include? edge
-        else
-          @hole_edges << edge
-        end
-      end
+class IfcExportLibrary
+	def initialize()
+    
+  end
+
+  #116 = IFCCARTESIANPOINT((7.500E-1, 3.000E-1));
+
+  def IfcCartesianpoint(m_aSuPoint)#function that takes a sketchup ?vertex? and returns an ifc cartesianpoint
+    
+  end
+  def IfcPolyline(m_aSuPoints)#function that takes a sketchup ?face? and returns an ifc polyline
+    require 'bim-tools\ifc\cartesianpoint.rb'
+    m_aSuPoints.each |point|
+      IfcCartesianpoint.new.export(point)
     end
   end
-  @hole_edges.each do |edge|
-    if edge.deleted? == false
-      edge.erase!
-    end
-  end
-end
+end #class IfcExportLibrary

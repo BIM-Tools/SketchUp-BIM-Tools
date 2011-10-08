@@ -1,6 +1,6 @@
 #       cut_opening.rb
 #       
-#       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2011 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -17,6 +17,50 @@
 
 class CutOpening
 	def initialize(entity, glue_surface)
+    @entity = entity
+    opening = CuttingFace.new(entity, glue_surface)
+    #list all faces for extrusion/identification
+    faces = Array.new
+    opening.geometry.entities.each do |entity|
+      if entity.typename == "Face"
+        faces << entity
+      end
+    end
+    width = glue_surface.get_attribute "ifc", "width"
+
+    extrusion = -width.to_f.mm
+    faces.each do |face|
+      #extrusion direction depends on drawing direction of edges, reverse if wrong direction
+      if face.normal.y > 0
+        face.reverse!
+      end
+      face.pushpull extrusion, true
+    end
+    caps_set = Set.new
+    @hole_faces = Array.new
+    #determine the top and bottom faces
+    plane = faces[0].plane
+    opening.geometry.entities.each do |entity|
+      if entity.typename == "Face"
+        if Geom.intersect_plane_plane(entity.plane, plane) == nil
+          caps_set.insert entity
+        else
+          entity.reverse!
+          id = @entity.get_attribute "ifc", "id"
+          entity.set_attribute "ifc", "parent", id
+        end
+      end
+    end
+    opening.geometry.explode
+    caps_set.each do |entity|
+      entity.erase!
+    end
+  end
+end
+
+class CuttingFace
+	def initialize(entity, glue_surface)
+    @opening_position
     # if entity.typename == "ComponentInstance"
     @entity = entity
     definition = entity.definition
@@ -24,8 +68,8 @@ class CutOpening
     trans_opening = entity.transformation
     trans_wall = glue_surface.transformation
     @transformation =  trans_wall.invert! * trans_opening
-    opening = entities.add_group
-    @opening_entities = opening.entities
+    @opening = entities.add_group
+    @opening_entities = @opening.entities
     definition_entities = definition.entities
     definition_entities.each do |def_ent|
       if def_ent.typename == "Edge"
@@ -69,12 +113,11 @@ class CutOpening
       end
     end
     #create all possible cut faces
-    opening.entities.each do |entity|
+    @opening.entities.each do |entity|
       if entity.typename == "Edge"
         entity.find_faces
       end
     end
-    
     
     #erase all internal edges, recursively because one deleted edge affects another
     def erase_internal(entities)
@@ -89,39 +132,17 @@ class CutOpening
         end
       end
     end
-    erase_internal(opening.entities)
+    erase_internal(@opening.entities)
+    @opening_position = @opening.transformation.origin
     
-    #list all faces for extrusion/identification
-    faces = Array.new
-    opening.entities.each do |entity|
-      if entity.typename == "Face"
-        faces << entity
-      end
-    end
-    width = glue_surface.get_attribute "ifc", "width"
-    #extrusion direction depends on drawing direction of edges, sometimes extrusion in wrong direction
-    extrusion = -width.to_f.mm
-    faces.each do |face|
-      face.pushpull extrusion, true
-    end
-    caps_set = Set.new
-    @hole_faces = Array.new
-    #determine the top and bottom faces
-    plane = faces[0].plane
-    opening.entities.each do |entity|
-      if entity.typename == "Face"
-        if Geom.intersect_plane_plane(entity.plane, plane) == nil
-          caps_set.insert entity
-        else
-          entity.reverse!
-          id = @entity.get_attribute "ifc", "id"
-          entity.set_attribute "ifc", "parent", id
-        end
-      end
-    end
-    opening.explode
-    caps_set.each do |entity|
-      entity.erase!
-    end
+    return @opening
+
+  end
+  
+  def geometry
+    return @opening
+  end
+  def opening_position
+    return @opening_position
   end
 end
