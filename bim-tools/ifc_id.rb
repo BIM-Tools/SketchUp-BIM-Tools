@@ -4,7 +4,6 @@ class IfcId
 		
 		# check if ifc_id exists. no? current_id
 		if @model.get_attribute "ifc", "id" == nil
-			puts "empty!"
 			current_id()
 		end
 	end

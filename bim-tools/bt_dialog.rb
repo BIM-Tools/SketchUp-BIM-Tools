@@ -1,6 +1,6 @@
 #       bt_dialog.rb
 #       
-#       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2011 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -17,16 +17,17 @@
 
 class Bt_dialog
 
-	def initialize()
+	def initialize(bt_lib)
 		
 		# Create WebDialog instance
 		@dialog = UI::WebDialog.new
 		
 		pathname = File.expand_path( File.dirname(__FILE__) )
-		@walls = File.join( pathname, 'walls.rb' )
+		#@walls = File.join( pathname, 'walls.rb' )
+		@walls = File.dirname(__FILE__) + File::SEPARATOR + "parts" + File::SEPARATOR + "wall.rb"
 		@exporter = File.join( pathname, 'IFCexporter.rb' )
 		@imagepath = File.dirname(__FILE__) + File::SEPARATOR + "images" + File::SEPARATOR
-		
+		@bt_lib = bt_lib
 		@dialog.set_html( html ) 
 		
 		self.walls()
@@ -45,19 +46,20 @@ class Bt_dialog
 		end
 	end
 
-	def walls
+	def walls()
 		require @walls
 		@dialog.add_action_callback("walls_from_selection") {|dialog, params|
 			wall_height = dialog.get_element_value("height")
 			wall_width = dialog.get_element_value("width")
-			walls_from_selection(wall_width, wall_height)
+			walls_from_selection(@bt_lib, wall_width, wall_height)
 		}
 	end
 
-	def export
+	def export()
 		require @exporter
 		@dialog.add_action_callback("ifcexporter") {|dialog, params|
-			ifcexporter()
+			IFCexporter.new(@bt_lib)
+			
 		}
 	end
 	

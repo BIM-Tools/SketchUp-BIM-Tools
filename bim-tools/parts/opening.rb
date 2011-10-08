@@ -1,6 +1,6 @@
 #       opening.rb
 #       
-#       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2011 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -17,7 +17,11 @@
 
 # This class checks if a newly placed "cutting" component is glued to a wall, and cuts a hole.
 class MyEntitiesObserver < Sketchup::EntitiesObserver
+  def initialize(bt_lib)
+    @bt_lib = bt_lib
+  end
   def onElementAdded(entities, entity)
+    require 'bim-tools\BtObjects.rb'
     model = Sketchup.active_model
     # run only if added entity is component instance
     if entity.typename == "ComponentInstance"
@@ -31,9 +35,11 @@ class MyEntitiesObserver < Sketchup::EntitiesObserver
 	  if attribute == "IfcWallStandardCase" # only cut holes in walls...
 	    model.start_operation("Create opening", disable_ui=true) # Start of operation/undo section
 	    
-	    # find a unique id number and attach to opening
-	    require 'bim-tools\ifc_id.rb'
-	    IfcId.new.set_id(entity)
+	    #require 'bim-tools\ifc_id.rb'
+	    #IfcId.new.set_id(entity)
+	    # find a unique id number and attach attribute to opening
+	    require 'bim-tools\lib\ifcGeneral.rb'
+	    set_id(entity)
 	    
 	    # first erase old hole
 	    require 'bim-tools\erase_opening.rb'
@@ -46,6 +52,9 @@ class MyEntitiesObserver < Sketchup::EntitiesObserver
 	    # add observer to opening, to monitor any transformations
 	    require 'bim-tools\opening_observer.rb'
 	    entity.add_observer(OpeningObserver.new)
+	    
+	    # Create new opening object from geometry
+	    opening_element = BtOpening.new(@bt_lib, entity)
 	    
 	    model.commit_operation # End of operation/undo section
 	    model.active_view.refresh # Refresh model

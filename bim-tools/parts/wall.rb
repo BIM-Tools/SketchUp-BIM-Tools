@@ -1,6 +1,6 @@
-#       bimtools.rb
+#       walls.rb
 #       
-#       Copyright 2011 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2011 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-    def walls_from_selection(wall_width, wall_height) # Create new wall objects from selection.
+    def walls_from_selection(bt_lib, wall_width, wall_height) # Create new wall objects from selection.
 
       model = Sketchup.active_model
       entities = model.active_entities
@@ -25,7 +25,7 @@
       model.start_operation("Create walls", disable_ui=true) # Start of operation/undo section
 	selection.each { |base_edge|
 	  if base_edge.is_a? Sketchup::Edge
-	    Wall.new(base_edge, wall_width, wall_height)
+	    Wall.new(bt_lib, base_edge, wall_width, wall_height)
 	  end
 	}
       model.commit_operation # End of operation/undo section
@@ -35,7 +35,7 @@
     class Wall
       attr_accessor :base_edge
       
-      def initialize(base_edge, wall_width, wall_height)
+      def initialize(bt_lib, base_edge, wall_width, wall_height)
 	
 	@base_edge = base_edge
 	edge_start_vertex = base_edge.start
@@ -55,10 +55,21 @@
 	group.set_attribute "ifc", "width", wall_width
 	group.set_attribute "ifc", "height", wall_height
 	
+	# find a unique id number and attach attribute to wall
+	require 'bim-tools\lib\ifcGeneral.rb'
+	set_id(group)
+	
 	#add group to ifc_layer
 	 layer = Sketchup.active_model.layers.add "ifcWall"
 	 group.layer = layer
 	 
+	# Create new BtWall object from geometry
+	wall_element = BtWall.new(bt_lib, group)
+	return wall_element
+	 
+      end
+      def material()# temporary material function
+	return "Default material"
       end
       def wall_slice_planes(edge_end_vertex, base_edge, edge_transformation)
 	connected_edges = edge_end_vertex.edges
@@ -158,6 +169,7 @@
 	
 	face.set_attribute "ifc", "ifc_construct", "IfcArea"
 	face.reverse!
+	
 	return group
       end
     end
