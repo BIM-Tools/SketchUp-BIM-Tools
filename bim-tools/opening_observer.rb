@@ -17,13 +17,19 @@
 
 class OpeningObserver < Sketchup::EntityObserver
 	def onChangeEntity(entity)
+		model = Sketchup.active_model
 		entity = entity
 		glue_surface = entity.glued_to
+		
+		model.start_operation("Modify opening", disable_ui=true) # Start of operation/undo section
 		
 		require 'bim-tools\erase_opening.rb'
 		erase_opening(entity, glue_surface)
 		
 		require 'bim-tools\cut_opening.rb'
 		CutOpening.new(entity, glue_surface)
+		
+		model.commit_operation # End of operation/undo section
+    model.active_view.refresh # Refresh model
 	end
 end
