@@ -24,10 +24,26 @@ module FreeBuilder  # <-- Main project namespace
 
     # Show the Ruby Console at startup
     # Sketchup.send_action "showRubyPanel:"
-
+     
     # Create the bim-tools objects library, keeps track of all bim-tools objects
     # Should this be a global???
-    lib = ObjectLibrary.new
+    @lib = ObjectLibrary.new
+
+    # Attach App observer --> To do if open existing model, in current session
+    class MyAppObserver < Sketchup::AppObserver
+      def onOpenModel(model)
+        require 'bim-tools\ObjectLibrary.rb'
+        @lib = ObjectLibrary.new 
+        
+        #start opening observer
+        Sketchup.active_model.entities.add_observer(MyEntitiesObserver.new(@lib))
+        
+      end
+    end
+    # Attach the observer
+    Sketchup.add_observer(MyAppObserver.new)
+
+    lib = @lib
 
     #Create webdialog with BIM tools
     def self.bt_window(lib)
