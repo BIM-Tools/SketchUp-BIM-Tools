@@ -32,7 +32,6 @@ class ObjectLibrary
   # update bim-tools object list
   def reload
     # check if all objects in list still exist, if not: remove from list
- 
   end
   def fill
     # find all bim-tools objects in active model and add to list
@@ -51,16 +50,15 @@ class ObjectLibrary
           building_element = BtWall.new(self, entity)
         elsif ifc_type == "IfcWindow"
           building_element = BtOpening.new(self, entity)
+          # add observer to opening, to monitor any transformations
+          require 'bim-tools\opening_observer.rb'
+          entity.add_observer(OpeningObserver.new)
         else
           building_element = BuildingElement.new(self, entity)
         end
-          
         #self.add(building_element)
         #building_element.geometry = entity # needs to be part of BuildingElement class init
         #building_element.type = type # needs to be part of BuildingElement class init
-        
-        
-        
       end
     end
   end
