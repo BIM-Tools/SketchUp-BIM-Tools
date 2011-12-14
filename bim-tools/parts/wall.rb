@@ -56,7 +56,7 @@
 	group.set_attribute "ifc", "height", wall_height
 	
 	# find a unique id number and attach attribute to wall
-	require 'bim-tools\lib\ifcGeneral.rb'
+	require 'bim-tools/lib/ifcGeneral.rb'
 	set_id(group)
 	
 	#add group to ifc_layer

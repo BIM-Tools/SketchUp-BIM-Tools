@@ -26,7 +26,7 @@ class IfcExportLibrary
     
   end
   def IfcPolyline(m_aSuPoints)#function that takes a sketchup ?face? and returns an ifc polyline
-    require 'bim-tools\ifc\cartesianpoint.rb'
+    require 'bim-tools/ifc/cartesianpoint.rb'
     m_aSuPoints.each |point|
       IfcCartesianpoint.new.export(point)
     end

@@ -23,10 +23,10 @@ class OpeningObserver < Sketchup::EntityObserver
 		
 		model.start_operation("Modify opening", disable_ui=true) # Start of operation/undo section
 		
-		require 'bim-tools\erase_opening.rb'
+		require 'bim-tools/erase_opening.rb'
 		erase_opening(entity, glue_surface)
 		
-		require 'bim-tools\cut_opening.rb'
+		require 'bim-tools/cut_opening.rb'
 		CutOpening.new(entity, glue_surface)
 		
 		model.commit_operation # End of operation/undo section

@@ -39,7 +39,7 @@ class IFCexporter
 	def export()
 	  Sketchup.set_status_text("IFCExporter: Exporting IFC entities...") # inform user that ifc-export is running
 	  
-		require 'bim-tools\ifc_classes.rb' #contains all ifc-object classes
+		require 'bim-tools/ifc_classes.rb' #contains all ifc-object classes
 	  
 		ifc_name = @skpName + ".ifc"
 		ifc_filepath=File.join(@project_path, ifc_name)

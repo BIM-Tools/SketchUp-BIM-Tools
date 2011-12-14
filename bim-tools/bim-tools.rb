@@ -19,8 +19,8 @@ module FreeBuilder  # <-- Main project namespace
   module Bim_Tools  # <-- BIM project namespace
 
     require 'sketchup.rb' # needed here?
-    require 'bim-tools\ObjectLibrary.rb'
-    require 'bim-tools\parts\opening.rb'
+    require 'bim-tools/ObjectLibrary.rb'
+    require 'bim-tools/parts/opening.rb'
 
     # Show the Ruby Console at startup
     # Sketchup.send_action "showRubyPanel:"
@@ -32,7 +32,7 @@ module FreeBuilder  # <-- Main project namespace
     # Attach App observer --> To do if open existing model, in current session
     class MyAppObserver < Sketchup::AppObserver
       def onOpenModel(model)
-        require 'bim-tools\ObjectLibrary.rb'
+        require 'bim-tools/ObjectLibrary.rb'
         @lib = ObjectLibrary.new 
         
         #start opening observer
@@ -47,13 +47,13 @@ module FreeBuilder  # <-- Main project namespace
 
     #Create webdialog with BIM tools
     def self.bt_window(lib)
-      require 'bim-tools\bt_dialog.rb'
+      require 'bim-tools/bt_dialog.rb'
       window = Bt_dialog.new(lib)
     end
 		
     #fill all ifc settings with default values
     def self.defaults()
-      require 'bim-tools\defaults.rb'
+      require 'bim-tools/defaults.rb'
       Set_defaults.new
     end
     	

@@ -21,7 +21,7 @@ class MyEntitiesObserver < Sketchup::EntitiesObserver
     @bt_lib = bt_lib
   end
   def onElementAdded(entities, entity)
-    require 'bim-tools\BtObjects.rb'
+    require 'bim-tools/BtObjects.rb'
     model = Sketchup.active_model
     # run only if added entity is component instance
     if entity.typename == "ComponentInstance"
@@ -38,19 +38,19 @@ class MyEntitiesObserver < Sketchup::EntitiesObserver
 	    #require 'bim-tools\ifc_id.rb'
 	    #IfcId.new.set_id(entity)
 	    # find a unique id number and attach attribute to opening
-	    require 'bim-tools\lib\ifcGeneral.rb'
+	    require 'bim-tools/lib/ifcGeneral.rb'
 	    set_id(entity)
 	    
 	    # first erase old hole
-	    require 'bim-tools\erase_opening.rb'
+	    require 'bim-tools/erase_opening.rb'
 	    erase_opening(entity, glue_surface)
 	    
 	    # cut new hole
-	    require 'bim-tools\cut_opening.rb'
+	    require 'bim-tools/cut_opening.rb'
 	    CutOpening.new(entity, glue_surface)
 	    
 	    # add observer to opening, to monitor any transformations
-	    require 'bim-tools\opening_observer.rb'
+	    require 'bim-tools/opening_observer.rb'
 	    entity.add_observer(OpeningObserver.new)
 	    
 	    # Create new opening object from geometry

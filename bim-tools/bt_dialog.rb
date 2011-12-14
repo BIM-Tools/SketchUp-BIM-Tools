@@ -41,7 +41,7 @@ class Bt_dialog
 	def project_data
 		# Attach an action callback
 		@dialog.add_action_callback("get_data") do |dialog,value|
-			require 'bim-tools\project_data.rb'
+			require 'bim-tools/project_data.rb'
 			project_data_update(value)
 		end
 	end
