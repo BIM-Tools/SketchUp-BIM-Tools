@@ -21,6 +21,6 @@ require 'sketchup.rb'
 require 'extensions.rb'
 
 bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools.rb"
-bimtools.version = '0.9.1'
+bimtools.version = '0.9.2'
 bimtools.description = "Tools to create walls from edges and export these to IFC."
 Sketchup.register_extension bimtools, true
