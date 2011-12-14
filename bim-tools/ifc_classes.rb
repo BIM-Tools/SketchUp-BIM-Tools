@@ -319,7 +319,7 @@ class IfcOpeningElement < IfcObject #ifc opening object
 
   def get_ifc() # returns an array with the ifc records describing the opening object
   
-    require 'bim-tools\cut_opening.rb'
+    require 'bim-tools/cut_opening.rb'
     @opening = CuttingFace.new(@building_element.geometry, @voiding_element.geometry)
     #list all faces
     faces = Array.new

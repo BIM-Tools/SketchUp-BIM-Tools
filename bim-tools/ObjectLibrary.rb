@@ -51,7 +51,7 @@ class ObjectLibrary
         elsif ifc_type == "IfcWindow"
           building_element = BtOpening.new(self, entity)
           # add observer to opening, to monitor any transformations
-          require 'bim-tools\opening_observer.rb'
+          require 'bim-tools/opening_observer.rb'
           entity.add_observer(OpeningObserver.new)
         else
           building_element = BuildingElement.new(self, entity)

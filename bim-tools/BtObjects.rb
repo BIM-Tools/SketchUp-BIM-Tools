@@ -32,7 +32,7 @@ class BuildingElement
   attr_accessor :material
   
   def base_init(bt_lib, geometry=nil)
-    require 'bim-tools\lib\ifcGeneral.rb'
+    require 'bim-tools/lib/ifcGeneral.rb'
     @id = guid
     @type = type(geometry)
     @geometry = geometry

@@ -18,7 +18,7 @@
 class Set_defaults
 
 	def initialize()
-		require 'bim-tools\config.rb'
+		require 'bim-tools/config.rb'
 				
 		set_value("author", Bt_Config::Author)
 		set_value("organization", Bt_Config::Organization)
