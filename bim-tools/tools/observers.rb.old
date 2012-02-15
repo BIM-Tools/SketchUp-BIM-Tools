@@ -1,0 +1,96 @@
+class MyEntitiesObserver < Sketchup::EntitiesObserver
+
+  def initialize( project )
+    @project = project
+  end
+  def onElementModified(entities, entity)
+    if entity.typename == "Face"
+      bt_entity = @project.library.source_to_bt_entity(@project, entity)
+      #this causes way too much overhead because every object is recreated multiple times
+      if bt_entity != nil
+        # do not refresh geometry when only "hidden"-state is changed
+        if bt_entity.source_hidden? == bt_entity.source.hidden?
+          @project.source_changed(bt_entity)
+          # start undo section
+          #model = Sketchup.active_model
+          #model.start_operation("Update BIM-Tools elements", disable_ui=true) # Start of operation/undo section
+          #bt_entity.source.edges.each do |edge|
+          #  edge.faces.each do |face|
+          #    if face != bt_entity.source
+          #      con_bt_entity = @project.library.source_to_bt_entity(@project, face)
+          #      con_bt_entity.update_geometry
+          #      UI.messagebox("onElementModified: " + entity.to_s)
+          #    end
+          #  end
+          #end
+          #bt_entity.update_geometry
+          #model.commit_operation # End of operation/undo section
+          #model.active_view.refresh # Refresh model
+        else
+          bt_entity.source_hidden = bt_entity.source.hidden?
+        end
+      end
+    end
+  end
+end
+
+
+# Based on work by thomthom
+# http://forums.sketchucation.com/viewtopic.php?f=180&t=39516&start=15#p349329
+
+class Bt_ModelObserver < Sketchup::ModelObserver
+    
+    def initialize( project )
+      @project = project
+      @delay = 0
+    end
+    
+    def onTransactionStart( model )
+      #puts 'onTransactionStart'
+      UI.stop_timer( @delay )
+    end
+    
+    def onTransactionCommit( model )
+      #puts 'onTransactionCommit'
+      #@project.onModelChange( model )
+      # (!) onTransactionStart and onTransactionCommit mistriggers between
+      #     model.start/commit_operation.
+      #
+      # Because of this its impossible to know when an operation has completed.
+      # Executing the cache on each change will slow everything down.
+      #
+      # For now a very ugly timer hack is used to delay the trigger. It's nasty,
+      # filthy and only works in SU8.0+ as UI.start_timer was bugged in earlier
+      # versions.
+      #
+      # Simple tests indicate that the delayed event triggers correctly with the
+      # timer set to 0.0 - so it might work even with older versions. But more
+      # testing is needed to see if it is reliable and doesn't allow for the
+      # delayed event to trigger in mid-operation and slow things down.
+      #
+      # Since the event only trigger reading of geometry the only side-effect of
+      # a mistrigger would be a slowdown.
+      UI.stop_timer( @delay )
+      @delay = UI.start_timer( 0.001, false ) {
+        #puts 'Delayed onTransactionCommit'
+        # Just to be safe in case of any modal windows being popped up due to
+        # the called method the timer is killed. SU doesn't kill the timer until
+        # the block has completed so a modal window will make the timer repeat.
+        UI.stop_timer( @delay )
+        @project.onModelChange( model )
+        model.active_view.invalidate
+      }
+    end
+    
+    def onTransactionUndo( model )
+      #puts 'onTransactionUndo'
+      @project.onModelChange( model )
+    end
+    
+    def onTransactionRedo( model )
+      #puts 'onTransactionRedo'
+      @project.onModelChange( model )
+    end
+    
+  end # class Bt_ModelObserver
+ 

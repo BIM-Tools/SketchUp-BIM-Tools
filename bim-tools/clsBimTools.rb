@@ -15,12 +15,17 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Create an entry in the Extension list that loads a script called
-# bim-tools.rb.
-require 'sketchup.rb'
-require 'extensions.rb'
+# Show the Ruby Console at startup
+Sketchup.send_action "showRubyPanel:"
 
-bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-bimtools.version = '0.10.alpha1'
-bimtools.description = "Tools to create building parts and export these to IFC."
-Sketchup.register_extension bimtools, true
+# BimTools initialisation class
+class ClsBimTools
+  def initialize
+	require "bim-tools/clsBtProject.rb"
+	require "bim-tools/ui/clsBtUi.rb"
+    project = ClsBtProject.new # create a new project
+    ClsBtUi.new(project) # start all UI elements: webdialog (?toolbar?)
+  end
+  # is it possible to completely “unload” the plugin during a session?
+  # def destructor
+end
