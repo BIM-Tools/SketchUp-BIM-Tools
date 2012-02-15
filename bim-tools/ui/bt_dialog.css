@@ -1,0 +1,76 @@
+html {
+	font-family: Tahoma, Verdana, Arial, Helvetica, sans-serif;
+	font-size: 0.7em;
+	height: 100%;
+	background-color: #f0f0f0;
+}
+body {
+	width: 198px;
+	margin: 1px;
+	padding: 0;
+}
+h1 {
+	font-size: 1em;
+	font-weight: bold;
+	width: 198px;
+	height: 16px;
+	margin: 0;
+	padding: 0;
+	margin-left: 6px;
+	padding-top: 6px;
+	background-image: url(images/minimize.png);
+	background-repeat: no-repeat;
+	background-position: right top;
+}
+h2 {
+	font-size: 1em;
+	font-weight: bold;
+	margin: 0;
+	padding: 0;
+	padding-left: 12px;
+}
+p {
+	height: 1em;
+}
+hr {
+	height: 0;
+	border: 0;
+	border-bottom: 1px solid #a0a0a0;
+}
+a {
+	color: #000000;
+	text-decoration: none;
+}
+span {
+	display: block;
+	float: left;
+	width: 70px;
+	height: 1em;
+	margin-right: 10px;
+}
+form {
+	padding-left: 12px;
+}
+label {
+	display: block;
+	float: left;
+	width: 68px;
+	height: 1em;
+}
+input {
+	font-size: 1em;
+	height: 1em;
+	width: 98px;
+}
+select {
+	font-size: 1em;
+	width: 98px;
+	height: 20px;
+}
+form hr {
+}
+form #submit {
+	font-size: 1em;
+	height: 22px;
+	width: 100%;
+}
