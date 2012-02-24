@@ -23,18 +23,25 @@ class Bt_dialog
 		@dialog = UI::WebDialog.new
 		
 		pathname = File.expand_path( File.dirname(__FILE__) )
-		#@walls = File.join( pathname, 'walls.rb' )
-		@walls = File.dirname(__FILE__) + File::SEPARATOR + "parts" + File::SEPARATOR + "wall.rb"
+		@walls = File.dirname(__FILE__) + "/parts/wall.rb"
 		@exporter = File.join( pathname, 'IFCexporter.rb' )
-		@imagepath = File.dirname(__FILE__) + File::SEPARATOR + "images" + File::SEPARATOR
+		@imagepath = File.dirname(__FILE__) + "/images/"
 		@bt_lib = bt_lib
-		@dialog.set_html( html ) 
 		
+		# replacement of set_html by a temporary html-file because of security restrictions in safari
+		tmpDir = File.expand_path( ENV['TMP'] || ENV['TEMP'] || ENV['TMPDIR'] || "/tmp" )
+		tmpPath = tmpDir + 'btDialog.html'
+		tmpFile=(File.open(tmpPath, 'w+'))
+		tmpFile.rewind
+		tmpFile.puts html
+		tmpFile.rewind   
+			
 		self.walls()
 		self.project_data()
 		self.export()
-		
+			
 		@dialog.show
+		@dialog.set_file(tmpPath)
 		
 	end
 	

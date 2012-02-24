@@ -35,7 +35,7 @@ class MyEntitiesObserver < Sketchup::EntitiesObserver
 	  if attribute == "IfcWallStandardCase" # only cut holes in walls...
 	    model.start_operation("Create opening", disable_ui=true) # Start of operation/undo section
 	    
-	    #require 'bim-tools\ifc_id.rb'
+	    #require 'bim-tools/ifc_id.rb'
 	    #IfcId.new.set_id(entity)
 	    # find a unique id number and attach attribute to opening
 	    require 'bim-tools/lib/ifcGeneral.rb'

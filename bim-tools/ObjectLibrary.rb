@@ -39,7 +39,7 @@ class ObjectLibrary
     # - geometry(sketchup-object: group, edge)
     # - bim-tools-type(wall/floor OR planar/linear)
     # - guid(defined inside class on object creation)
-    require 'bim-tools\BtObjects.rb'
+    require 'bim-tools/BtObjects.rb'
     
     entities = Sketchup.active_model.entities
     entities.each do |entity|
