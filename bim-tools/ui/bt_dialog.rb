@@ -20,15 +20,19 @@ class Bt_dialog
   def initialize(project)
     @project = project
     bt_lib = @project.library
-		    
+
+    # Create WebDialog instance, patched for OSX
+    require 'bim-tools/lib/WebdialogPatch.rb'
+    @dialog = WebDialogPatch.new
+
     # Create WebDialog instance
-    @dialog = UI::WebDialog.new("BIM-Tools menu")
+    # @dialog = UI::WebDialog.new("BIM-Tools menu")
     @dialog.min_width= 243
     @dialog.max_width= 243
     
     @pathname = File.expand_path( File.dirname(__FILE__) )
     mainpath = @pathname.split('ui')[0]
-    @imagepath = mainpath + "images" + File::SEPARATOR
+    @imagepath = mainpath + "images/"
     @bt_lib = bt_lib
     @javascript = ""
     
