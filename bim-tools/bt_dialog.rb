@@ -148,13 +148,12 @@ class Bt_dialog
 	
 	def html_top
 		start_top = "
-			<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
-			'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-			<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en' style='margin:0;padding:0;height:100%:position:relative'>
-				<head>
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset=utf-8'>
 					<title>bt_window</title>
 					<link rel='stylesheet' type='text/css' href='bim-tools.css' />
-					<meta http-equiv='content-type' content='text/html;charset=utf-8' />
 		"
 		end_top = "
 			</head>
