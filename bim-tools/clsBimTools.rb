@@ -15,9 +15,6 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Show the Ruby Console at startup
-Sketchup.send_action "showRubyPanel:"
-
 # BimTools initialisation class
 class ClsBimTools
   def initialize

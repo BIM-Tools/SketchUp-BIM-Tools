@@ -18,12 +18,13 @@
 class Bt_dialog
 
   def initialize(project)
+  
     @project = project
     bt_lib = @project.library
 
     # Create WebDialog instance, patched for OSX
     require 'bim-tools/lib/WebdialogPatch.rb'
-    @dialog = WebDialogPatch.new
+    @dialog = WebDialogPatch.new("BIM-Tools menu", false, "bim-tools", 243, 320, 150, 150, true)
 
     # Create WebDialog instance
     # @dialog = UI::WebDialog.new("BIM-Tools menu")
@@ -48,15 +49,19 @@ class Bt_dialog
     @h_sections["EntityInfo"] = entityInfo
     #@h_sections["ProjectData"] = ClsProjectData.new
     
-    @dialog.set_html( html ) 
-    @dialog.show
+    @dialog.set_html( html )
+    self.show
     
     # Attach the observer.
     Sketchup.active_model.selection.add_observer(MySelectionObserver.new(@project, self, entityInfo))
 		
   end
+  def show
+    MAC ? @dialog.show_modal() : @dialog.show()
+    # return nil
+  end
   def refresh
-    @dialog.set_html( html ) 
+    @dialog.set_html( html )
   end
   def html
     content = ""
