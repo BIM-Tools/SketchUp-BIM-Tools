@@ -94,19 +94,25 @@ class ClsPlanarElement < ClsBuildingElement
       
       # bekijk of het vlak verticaal moet zijn of moet aansluiten op naastliggende geometrie
       if a_connecting_faces.length == 1
-        #vector1 = a_connecting_faces[0].normal + @source.normal # tel de normal-vectoren van de aansluitende vlakken bij elkaar op, dit geeft een vector met de helft van de hoek.
-        #vector2 = line_vector
-        #plane_vector = vector1.cross line_vector
-        ## alternatieve methode die rekening houdt met de dikte van de planar:
-        a_connecting_faces[0]
-        connecting_entity = find_bt_entity_for_face(a_connecting_faces[0])
-        bottom_line = Geom.intersect_plane_plane(self.planes[0], connecting_entity.planes[0])
-        top_line = Geom.intersect_plane_plane(self.planes[1], connecting_entity.planes[1])
-        ## line = [point3d, vector3d]
-        point1 = bottom_line[0]
-        point2 = bottom_line[0] + bottom_line[1]
-        point3 = top_line[0]
-        plane = Geom.fit_plane_to_points point1, point2, point3
+        # if source and connecting faces are parallel, then also create vertical end.
+        if @source.normal == a_connecting_faces[0].normal
+          plane_vector = normal.cross line_vector # unit vector voor plane
+          plane = [point, plane_vector]
+        else
+          #vector1 = a_connecting_faces[0].normal + @source.normal # tel de normal-vectoren van de aansluitende vlakken bij elkaar op, dit geeft een vector met de helft van de hoek.
+          #vector2 = line_vector
+          #plane_vector = vector1.cross line_vector
+          ## alternatieve methode die rekening houdt met de dikte van de planar:
+          a_connecting_faces[0]
+          connecting_entity = find_bt_entity_for_face(a_connecting_faces[0])
+          bottom_line = Geom.intersect_plane_plane(self.planes[0], connecting_entity.planes[0])
+          top_line = Geom.intersect_plane_plane(self.planes[1], connecting_entity.planes[1])
+          ## line = [point3d, vector3d]
+          point1 = bottom_line[0]
+          point2 = bottom_line[0] + bottom_line[1]
+          point3 = top_line[0]
+          plane = Geom.fit_plane_to_points point1, point2, point3
+        end
       else
         # verticaal vlak
         plane_vector = normal.cross line_vector # unit vector voor plane
@@ -129,6 +135,7 @@ class ClsPlanarElement < ClsBuildingElement
       else
         plane1 = aPlanesVert[i-1]
       end
+      # if both planes are parallel then there is no intersection between planes
       line_start = Geom.intersect_plane_plane(plane1, plane)
       
       if i == j - 1
@@ -136,6 +143,7 @@ class ClsPlanarElement < ClsBuildingElement
       else
         plane2 = aPlanesVert[i+1]
       end
+      # if both planes are parallel then there is no intersection between planes
       line_end = Geom.intersect_plane_plane(plane2, plane)
       
       pts = []
