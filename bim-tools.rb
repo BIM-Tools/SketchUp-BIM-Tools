@@ -15,6 +15,18 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# roadmap:
+# prevent duplicate BIM-Tools entities from source faces
+# save BIM-data
+# recover lost BIM-Tools source faces
+# export to IFC
+
+# Changelog:
+# 120311 show BIM-data for source faces
+# 120311 added user input for element thickness using VCB
+# 120311 tested webdialog on IE8, works fine, shows min/max-image, but content width is a bit off...
+# webdialog show_modal for mac
+
 # Create an entry in the Extension list that loads a script called
 # bim-tools.rb.
 require 'sketchup.rb'
