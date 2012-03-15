@@ -27,6 +27,7 @@ class ClsBtProject
   def initialize(id=nil, name=nil, description=nil)
     @model = Sketchup.active_model
     require 'bim-tools/clsBtLibrary.rb'
+    require 'bim-tools/lib/find_ifc_entities.rb'
     @lib = ClsBtLibrary.new # would ClsBtEntities be a better name?
     
     # variable keeps track of visibility source or geometry
@@ -35,6 +36,9 @@ class ClsBtProject
     #set_id(id) # do or do not use "project" in method names?
     #set_name(name)
     #set_description(description)
+    
+    # When creating a new project, check if there are any IFC entities present in the current SketchUp model
+    ClsFindIfcEntities.new(self)
     
     #set observers
     Sketchup.active_model.entities.add_observer(BtEntitiesObserver.new(self))

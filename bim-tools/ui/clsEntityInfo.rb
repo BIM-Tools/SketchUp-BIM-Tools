@@ -78,7 +78,7 @@ class ClsEntityInfo < ClsDialogSection
     end
     # pas de waarde voor breedte aan!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # zoek in selectie of het een bt-object is, als dat zo is, pas de breedte daar op aan
-    bt_entities = @project.library.geometry_array_remove_non_bt_entities(@project, entities)
+    bt_entities = @project.library.array_remove_non_bt_entities(@project, entities)
 
     if bt_entities[0] != nil
       if bt_entities.length == 1
@@ -116,15 +116,17 @@ class ClsEntityInfo < ClsDialogSection
           list = ""
           first = true
           field[3].each do |val|
-            if first == true
-              list = list + "
-              <option selected='selected'>" + val + "</option>
-              "
-              first = false
-            else
-              list = list + "
-              <option>" + val + "</option>
-              "
+            unless val.nil?
+              if first == true
+                list = list + "
+                <option selected='selected'>" + val + "</option>
+                "
+                first = false
+              else
+                list = list + "
+                <option>" + val + "</option>
+                "
+              end
             end
           end
           html = html + "

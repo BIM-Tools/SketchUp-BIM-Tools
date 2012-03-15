@@ -29,6 +29,7 @@ class ClsPlanarElement < ClsBuildingElement
     @element_type = nil
     @name = ""
     @description = ""
+    @guid = ""
     if width == nil
       @width = 300.mm
     else
@@ -66,102 +67,135 @@ class ClsPlanarElement < ClsBuildingElement
     t_base_plane = Geom::Transformation.new(origin, zaxis)
     group.transformation = t_base_plane
     
-    aPlanesVert = Array.new
+    # array that holds the vertical-planes-array for every loop
+    aLoopsVertPlanes = Array.new
+    nOuterLoopNum = 0
+    nLoopCount = 0
     
-    # let op! als 2 vlakken gelijk zijn kan geen snijlijn worden uitgerekend!
-    
-    #bepaal de zij-planes door de cross-product te berekenen van de 2 vectoren(normal basisplane en vector edge) en 1 punt (edge.start) op te geven.
-    normal = @source.normal # 1e vector
-    
-    # zoek de verticale plane voor alle edges
-    @source.outer_loop.edges.each do |edge|
-      line = edge.line # line bestaat uit een array van 1 punt en 1 vector
-      point = line[0] # punt op lijn
-      line_vector = line[1] # 2e vector
+    @source.loops.each do |loop|
       
-      # bepaal hoeveel aansluitende vlakken(bt-elementen) er zijn
-      a_connecting_faces = Array.new#Array met alle aansluitende vlakken
-      connected = edge.faces
-      connected.each do |con_ent|
-        if con_ent != @source # als het vlak niet het basisvlak zelf is
-          @project.library.entities.each do |ent| # loop door de library heen # LET OP DAT DIT KAN STOPPEN ALS HET GEVONDEN IS!!!
-            if con_ent == ent.source # als het vlak voorkomt in de bt-library
-              a_connecting_faces << con_ent # voeg het vlak toe aan het array
+      # keep the loops array-index of the outer loop
+      if loop == @source.outer_loop
+        nOuterLoopNum == nLoopCount
+      end
+      
+      nLoopCount += 1
+      
+      aPlanesVert = Array.new
+      
+      # let op! als 2 vlakken gelijk zijn kan geen snijlijn worden uitgerekend!
+      
+      #bepaal de zij-planes door de cross-product te berekenen van de 2 vectoren(normal basisplane en vector edge) en 1 punt (edge.start) op te geven.
+      normal = @source.normal # 1e vector
+      
+      # zoek de verticale plane voor alle edges
+      loop.edges.each do |edge|# @source.outer_loop.edges.each do |edge|
+        line = edge.line # line bestaat uit een array van 1 punt en 1 vector
+        point = line[0] # punt op lijn
+        line_vector = line[1] # 2e vector
+        
+        # bepaal hoeveel aansluitende vlakken(bt-elementen) er zijn
+        a_connecting_faces = Array.new#Array met alle aansluitende vlakken
+        connected = edge.faces
+        connected.each do |con_ent|
+          if con_ent != @source # als het vlak niet het basisvlak zelf is
+            @project.library.entities.each do |ent| # loop door de library heen # LET OP DAT DIT KAN STOPPEN ALS HET GEVONDEN IS!!!
+              if con_ent == ent.source # als het vlak voorkomt in de bt-library
+                a_connecting_faces << con_ent # voeg het vlak toe aan het array
+              end
             end
           end
         end
-      end
-      
-      # bekijk of het vlak verticaal moet zijn of moet aansluiten op naastliggende geometrie
-      if a_connecting_faces.length == 1
-        # if source and connecting faces are parallel, then also create vertical end.
-        if @source.normal == a_connecting_faces[0].normal
+        
+        # bekijk of het vlak verticaal moet zijn of moet aansluiten op naastliggende geometrie
+        if a_connecting_faces.length == 1
+          # if source and connecting faces are parallel, then also create vertical end.
+          if @source.normal == a_connecting_faces[0].normal
+            plane_vector = normal.cross line_vector # unit vector voor plane
+            plane = [point, plane_vector]
+          else
+            #vector1 = a_connecting_faces[0].normal + @source.normal # tel de normal-vectoren van de aansluitende vlakken bij elkaar op, dit geeft een vector met de helft van de hoek.
+            #vector2 = line_vector
+            #plane_vector = vector1.cross line_vector
+            ## alternatieve methode die rekening houdt met de dikte van de planar:
+            a_connecting_faces[0]
+            connecting_entity = find_bt_entity_for_face(a_connecting_faces[0])
+            bottom_line = Geom.intersect_plane_plane(self.planes[0], connecting_entity.planes[0])
+            top_line = Geom.intersect_plane_plane(self.planes[1], connecting_entity.planes[1])
+            ## line = [point3d, vector3d]
+            point1 = bottom_line[0]
+            point2 = bottom_line[0] + bottom_line[1]
+            point3 = top_line[0]
+            plane = Geom.fit_plane_to_points point1, point2, point3
+          end
+        else
+          # verticaal vlak
           plane_vector = normal.cross line_vector # unit vector voor plane
           plane = [point, plane_vector]
-        else
-          #vector1 = a_connecting_faces[0].normal + @source.normal # tel de normal-vectoren van de aansluitende vlakken bij elkaar op, dit geeft een vector met de helft van de hoek.
-          #vector2 = line_vector
-          #plane_vector = vector1.cross line_vector
-          ## alternatieve methode die rekening houdt met de dikte van de planar:
-          a_connecting_faces[0]
-          connecting_entity = find_bt_entity_for_face(a_connecting_faces[0])
-          bottom_line = Geom.intersect_plane_plane(self.planes[0], connecting_entity.planes[0])
-          top_line = Geom.intersect_plane_plane(self.planes[1], connecting_entity.planes[1])
-          ## line = [point3d, vector3d]
-          point1 = bottom_line[0]
-          point2 = bottom_line[0] + bottom_line[1]
-          point3 = top_line[0]
-          plane = Geom.fit_plane_to_points point1, point2, point3
         end
-      else
-        # verticaal vlak
-        plane_vector = normal.cross line_vector # unit vector voor plane
-        plane = [point, plane_vector]
+        aPlanesVert << plane# voeg toe aan array met verticale planes
       end
-      aPlanesVert << plane# voeg toe aan array met verticale planes
+      aLoopsVertPlanes << aPlanesVert
     end
     
-    # collect the needed points for the top and bottom faces in an array
-    aFacePtsTop = Array.new
-    aFacePtsBottom = Array.new
+    nLoopCount = 0
     
-    # create side faces on every base-face edge
-    i = 0
-    j = aPlanesVert.length
-    while i < j do
-      plane = aPlanesVert[i]
-      if i == 0
-        plane1 = aPlanesVert[j-1]
-      else
-        plane1 = aPlanesVert[i-1]
+    # array will hold all temporary top and bottom faces(that is all exept that of the outer loop)
+    aTempFaces = Array.new
+    
+    aLoopsVertPlanes.each do |aPlanesVert|
+      
+      # collect the needed points for the top and bottom faces in an array
+      aFacePtsTop = Array.new
+      aFacePtsBottom = Array.new
+      
+      # create side faces on every base-face edge
+      i = 0
+      j = aPlanesVert.length
+      while i < j do
+        plane = aPlanesVert[i]
+        if i == 0
+          plane1 = aPlanesVert[j-1]
+        else
+          plane1 = aPlanesVert[i-1]
+        end
+        # if both planes are parallel then there is no intersection between planes
+        line_start = Geom.intersect_plane_plane(plane1, plane)
+        
+        if i == j - 1
+          plane2 = aPlanesVert[0]
+        else
+          plane2 = aPlanesVert[i+1]
+        end
+        # if both planes are parallel then there is no intersection between planes
+        line_end = Geom.intersect_plane_plane(plane2, plane)
+        
+        pts = []
+        pts[0] = Geom.intersect_line_plane(line_start, self.planes[0])
+        pts[1] = Geom.intersect_line_plane(line_start, self.planes[1])
+        pts[2] = Geom.intersect_line_plane(line_end, self.planes[1])
+        pts[3] = Geom.intersect_line_plane(line_end, self.planes[0])
+        
+        #if nOuterLoopNum == nLoopCount
+          aFacePtsTop << pts[0]
+          aFacePtsBottom << pts[1]
+        #end
+        
+        face = group.entities.add_face pts
+        i += 1
       end
-      # if both planes are parallel then there is no intersection between planes
-      line_start = Geom.intersect_plane_plane(plane1, plane)
       
-      if i == j - 1
-        plane2 = aPlanesVert[0]
-      else
-        plane2 = aPlanesVert[i+1]
+      # create the top and bottom faces
+      face_top = group.entities.add_face aFacePtsTop
+      face_bottom = group.entities.add_face aFacePtsBottom
+      
+      # remove all temporary top and bottom faces
+      unless nOuterLoopNum == nLoopCount
+        face_top.erase!
+        face_bottom.erase!
       end
-      # if both planes are parallel then there is no intersection between planes
-      line_end = Geom.intersect_plane_plane(plane2, plane)
-      
-      pts = []
-      pts[0] = Geom.intersect_line_plane(line_start, self.planes[0])
-      pts[1] = Geom.intersect_line_plane(line_start, self.planes[1])
-      pts[2] = Geom.intersect_line_plane(line_end, self.planes[1])
-      pts[3] = Geom.intersect_line_plane(line_end, self.planes[0])
-      
-      aFacePtsTop << pts[0]
-      aFacePtsBottom << pts[1]
-      
-      face = group.entities.add_face pts
-      i += 1
+      nLoopCount += 1
     end
-    
-    # create the top and bottom faces
-    face_top = group.entities.add_face aFacePtsTop
-    face_bottom = group.entities.add_face aFacePtsBottom
 
     # move group entities back in position with the inverse transformation
     a_entities = Array.new
@@ -182,6 +216,9 @@ class ClsPlanarElement < ClsBuildingElement
     else
       @geometry.hidden=true
     end
+    
+    # save all properties as attributes in the group
+    set_attributes
   end
   
   def possible_types
@@ -198,6 +235,9 @@ class ClsPlanarElement < ClsBuildingElement
   def update_geometry
     set_planes
     set_geometry
+  end
+  def geometry=(geometry)
+    @geometry = geometry
   end
   def offset
     return @offset
@@ -288,6 +328,20 @@ class ClsPlanarElement < ClsBuildingElement
       @element_type = "Floor"
     else
       @element_type = "Roof"
+    end
+  end  
+  # write planar attributes to geometry object
+  def set_attributes
+    unless @geometry.nil?
+      @geometry.set_attribute "ifc", "guid", guid?
+      @geometry.set_attribute "ifc", "type", element_type?
+      @geometry.set_attribute "ifc", "offset", @offset.to_s #needs to be in planarelement class
+      @geometry.set_attribute "ifc", "width", @width.to_s #needs to be in planarelement class
+      @geometry.set_attribute "ifc", "description", description?.to_s
+      @geometry.set_attribute "ifc", "name", name?.to_s
+    end
+    unless @source.nil?
+      @source.set_attribute "ifc", "guid", guid?
     end
   end
 end

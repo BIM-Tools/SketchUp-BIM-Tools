@@ -91,6 +91,15 @@ class ClsBtLibrary
     end
     return bt_entities
   end
+  
+  # return a new array that only contains the bt_entities from the objects in the input array
+  def array_remove_non_bt_entities(project, entities)
+    bt_entities_geometry = geometry_array_remove_non_bt_entities(project, entities)
+    bt_entities_source = source_array_remove_non_bt_entities(project, entities)
+    bt_entities = bt_entities_geometry + bt_entities_source
+    bt_entities.uniq!
+    return bt_entities
+  end
 
   private
   def setBtLibrary

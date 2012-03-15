@@ -16,12 +16,13 @@
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # roadmap:
-# prevent duplicate BIM-Tools entities from source faces
-# save BIM-data
 # recover lost BIM-Tools source faces
 # export to IFC
 
 # Changelog:
+# 120314 save BIM-data
+# 120312 create holes in planar elements
+# 120312 prevent duplicate BIM-Tools entities from source faces
 # 120311 show BIM-data for source faces
 # 120311 added user input for element thickness using VCB
 # 120311 tested webdialog on IE8, works fine, shows min/max-image, but content width is a bit off...

@@ -77,12 +77,9 @@ class ClsDialogSection
       # if field exists in input hash, then add field + new value to array
       if h_properties.has_key?(field[0]) == true
       
-        begin
-          if h_properties[field[0]] == nil
-            h_properties[field[0]] = ""
-          end
-        rescue
-        end
+        if h_properties[field[0]].nil?
+          h_properties[field[0]] = ""
+        end        
       
         field[3] = h_properties[field[0]]
         a_form_input << field
@@ -99,10 +96,9 @@ class ClsDialogSection
       fields.each do |field|
         if pair[0] == field[0]
           if field[4] == "length"
-            if pair[1] == nil
+            if pair[1].nil? # == nil
               h_Properties[pair[0]] = 0
-            elsif pair[1] == "..."
-            else
+            elsif pair[1] != "..."
               length = extract_length(pair[1])
               if length.eql? false
               else
@@ -110,18 +106,22 @@ class ClsDialogSection
               end
             end
           elsif field[4] == "select"
-            if pair[1] == nil
-              h_Properties[pair[0]] = ""
-            elsif pair[1] == "..."
-            else
+            unless pair[1].nil? || pair[1] == "..."
+            #if pair[1] == nil
+            #  h_Properties[pair[0]] = ""
+            #elsif pair[1] == "..."
+            #else
               h_Properties[pair[0]] = pair[1].to_s
             end
           else # if not length, than string # this is not allways correct, an array(select) could contain numbers(lengths)
-            if pair[1] == nil
-              h_Properties[pair[0]] = ""
-            elsif pair[1] == "..."
-            else
-              h_Properties[pair[0]] = pair[1].to_s
+            
+            # better notation?
+            unless pair[1].nil? || pair[1] == "..."
+            #if pair[1] == nil
+            #  h_Properties[pair[0]] = ""
+            #elsif pair[1] == "..."
+            #else
+              h_Properties[pair[0]] = pair[1]#.to_s
             end
           end
         end

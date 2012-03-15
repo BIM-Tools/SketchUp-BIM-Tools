@@ -35,7 +35,11 @@ class BtToolbar
       selection = Sketchup.active_model.selection
       if selection.length > 0
         require "bim-tools/tools/planar_from_faces.rb"
-        planar_from_faces(@project, selection)
+        
+        planar_from_faces = PlanarFromFaces.new(@project, selection)
+        Sketchup.active_model.select_tool planar_from_faces
+        
+        #planar_from_faces(@project, selection)
       end
     }
     

@@ -27,7 +27,7 @@ class ClsBtSelection
   
   # returns an array containing all BIM-Tools entities in the selection.
   def btEntities?
-    bt_entities = @project.library.geometry_array_remove_non_bt_entities(@project, @selection)
+    bt_entities = @project.library.array_remove_non_bt_entities(@project, @selection)
   end
   
   # returns a hash containing all properties common to the selected object
@@ -101,12 +101,12 @@ class ClsBtSelection
               prop_value = bt_entity.properties_editable[key]
             elsif bt_entity.properties_editable[key] != prop_value
 			  
-			  # if value is "select" form element array, and there are different values, than add ... to front of array
-			  if prop_value.kind_of?(Array)
-				prop_value.insert(0, "...") 
-			  else
-				prop_value = "..."
-			  end
+              # if value is "select" form element array, and there are different values, than add ... to front of array
+              if prop_value.kind_of?(Array)
+              prop_value.insert(0, "...") 
+              else
+              prop_value = "..."
+              end
               break
             end
           end

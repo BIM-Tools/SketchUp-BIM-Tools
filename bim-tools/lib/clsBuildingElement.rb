@@ -109,11 +109,7 @@ class ClsBuildingElement
   def source_hidden=(value)
     @source_hidden = value
   end
-  
-  # write planar attributes to source object
-  def set_attributes
-    @source.set_attribute "ifc", "guid", @guid
-  end
+
   def set_guid
     guid = '';22.times{|i|guid<<'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$'[rand(64)]}
     @guid = guid
