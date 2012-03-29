@@ -117,15 +117,17 @@ class ClsEntityInfo < ClsDialogSection
           first = true
           field[3].each do |val|
             unless val.nil?
-              if first == true
-                list = list + "
-                <option selected='selected'>" + val + "</option>
-                "
-                first = false
-              else
-                list = list + "
-                <option>" + val + "</option>
-                "
+              unless val.kind_of?(Array)
+                if first == true
+                  list = list + "
+                  <option selected='selected'>" + val + "</option>
+                  "
+                  first = false
+                else
+                  list = list + "
+                  <option>" + val + "</option>
+                  "
+                end
               end
             end
           end
