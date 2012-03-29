@@ -46,6 +46,10 @@ class ClsPlanarElement < ClsBuildingElement
     set_attributes
     set_planes
     
+    #a_set_geometry = Array[self]
+    # updates geometry connecting bt_entities(how to exclude double updating itself?)
+    #@project.bt_entities_set_geometry(a_set_geometry)
+    
     # deze observer houdt het basisvlak in de gaten, mocht deze wijzigen dan wijzigt ook de geometrie.
     #observer = SourceObserver.new
     #observer.set_planar(self)
@@ -255,18 +259,23 @@ class ClsPlanarElement < ClsBuildingElement
   # hiermee worden de outer planes bepaald
   def set_planes
   
-    # definieer het basisvlak voor het te maken element
-    base_plane = @source.plane
+    if @source.deleted?
+      self_destruct
+    else
     
-    # maak het top-vlak, door het originele array te kopieeren en bij de offset(laatste waarde) de nieuwe afstand op te tellen.
-    # Plane is een array van 4 waarden, waarvan de eerste 3 de unit-vector van het vlak beschrijven, en de laatste de loodrechte afstand van het vlak tot de oorsprong.
-    top_plane = [base_plane[0], base_plane[1], base_plane[2], base_plane[3] + @width - @offset]
-    bottom_plane = [base_plane[0], base_plane[1], base_plane[2], base_plane[3] - @offset]
-    
-    # Array needed to find intersections with planes of connecting elements
-    @aPlanesHor = Array.new
-    @aPlanesHor << bottom_plane
-    @aPlanesHor << top_plane    
+      # definieer het basisvlak voor het te maken element
+      base_plane = @source.plane
+      
+      # maak het top-vlak, door het originele array te kopieeren en bij de offset(laatste waarde) de nieuwe afstand op te tellen.
+      # Plane is een array van 4 waarden, waarvan de eerste 3 de unit-vector van het vlak beschrijven, en de laatste de loodrechte afstand van het vlak tot de oorsprong.
+      top_plane = [base_plane[0], base_plane[1], base_plane[2], base_plane[3] + @width - @offset]
+      bottom_plane = [base_plane[0], base_plane[1], base_plane[2], base_plane[3] - @offset]
+      
+      # Array needed to find intersections with planes of connecting elements
+      @aPlanesHor = Array.new
+      @aPlanesHor << bottom_plane
+      @aPlanesHor << top_plane
+    end
   end
   
   # met deze functie kun je een hash ophalen met alle informatieve eigenschappen
@@ -281,7 +290,11 @@ class ClsPlanarElement < ClsBuildingElement
   
   # met deze functie kun je een hash ophalen met alle eigenschappen die rechtstreeks te wijzigen zijn
   def properties_editable
-  
+    
+    if @geometry.deleted?
+      set_geometry
+    end
+    
     a_types = Array.new
     a_types << @element_type
     possible_types.each do |type|
@@ -317,6 +330,18 @@ class ClsPlanarElement < ClsBuildingElement
     set_planes
     #update_geometry
   end
+  
+  #same as previous, but without mm conversion
+  def set_properties(h_Properties)
+    @width = h_Properties["width"]
+    @offset = h_Properties["offset"]
+    @element_type = h_Properties["element_type"]
+    @name = h_Properties["name"]
+    @description = h_Properties["description"]
+    set_planes
+    #update_geometry
+  end
+  
   
   # the element_type based on the initial source state
   def init_type

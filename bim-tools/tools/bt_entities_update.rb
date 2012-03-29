@@ -15,41 +15,25 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Function that takes an array of BIM-Tools-elements as input, and updates its properties and the geometry for all connecting BIM-Tools-elements.
+#   parameters: BIM-Tools-project, array of BIM-Tools-elements, properties-hash
+#   returns: -
+
   def bt_entities_update(project, a_bt_entities, h_Properties)
-    # start undo section
+   # start undo section
     model = Sketchup.active_model
     model.start_operation("Change planars", disable_ui=true) # Start of operation/undo section
 
     # maak een nieuw array waarin alle te updaten bt_entities verzameld worden
-    to_update = Array.new
+    #to_update = Array.new
     
     # check if entity = bt_entity
     a_bt_entities.each do |bt_entity|
-
       bt_entity.properties=(h_Properties)
-      
-      # update ook alle naastliggende entities
-      face = bt_entity.source
-      face.edges.each do |edge|
-        edge.faces.each do |face|
-          bt_entity = find_bt_entity_for_face(project, face)
-          if bt_entity != nil
-          
-            #reset planes
-            bt_entity.set_planes
-            to_update << bt_entity
-          end
-        end
-      end
+      bt_entity.set_planes
     end
     
-    # zorg er voor dat alle bt_entities maar 1 keer in het array staan
-    to_update.uniq
-    
-    # update geometry van alle bt_entities
-    to_update.each do |bt_entity|
-      bt_entity.update_geometry
-    end
+    project.bt_entities_set_geometry(a_bt_entities)
     
     model.commit_operation # End of operation/undo section
     model.active_view.refresh # Refresh model

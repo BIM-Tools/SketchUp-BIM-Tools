@@ -26,6 +26,7 @@ class ClsBtProject
 
   def initialize(id=nil, name=nil, description=nil)
     @model = Sketchup.active_model
+    @project = self
     require 'bim-tools/clsBtLibrary.rb'
     require 'bim-tools/lib/find_ifc_entities.rb'
     @lib = ClsBtLibrary.new # would ClsBtEntities be a better name?
@@ -53,6 +54,32 @@ class ClsBtProject
     @source_tracker.refresh_geometry(bt_entity)
   end
   
+  # updates geometry for input bt_entities + connecting bt_entities
+  def bt_entities_set_geometry(a_bt_entities)
+    to_update = Array.new
+    
+    # find all connecting bt_entities and add to array
+    a_bt_entities.each do |bt_entity|
+      face = bt_entity.source
+      face.edges.each do |edge|
+        edge.faces.each do |face|
+          bt_entity = @lib.source_to_bt_entity(@project, face)
+          unless bt_entity.nil?
+            to_update << bt_entity
+          end
+        end
+      end
+    end
+    
+    # remove all duplicates from array
+    to_update.uniq!
+    
+    # update geometry
+    to_update.each do |bt_entity|
+      bt_entity.update_geometry
+    end
+  end
+  
   # switch between source and geometry visibility
   def toggle_geometry()
     # start undo section
@@ -65,7 +92,7 @@ class ClsBtProject
     end
     
     @lib.entities.each do |entity|
-      if entity.deleted? == false
+      unless entity.deleted?
         entity.geometry_visibility(@visible_geometry)
       end
     end
@@ -127,6 +154,87 @@ class ClsBtProject
   def library
     return @lib
   end
+  
+  def source_recovery
+    @model = Sketchup.active_model
+    @entities = @model.entities
+    #puts "source recovery started!"
+    h_guid = Hash.new
+    #a_faces = Array.new
+    a_faces = get_all_faces(@entities, Array.new)
+    #puts a_faces.length
+    a_faces.each do |face|
+      if face.get_attribute "ifc", "guid"
+        #puts "GUID found!"
+        bt_entity = @lib.source_to_bt_entity(self, face)
+        if bt_entity.nil?
+          guid = face.get_attribute "ifc", "guid"
+          if h_guid.has_key?(guid)
+            h_guid[guid] << face
+            #puts face
+          else
+            h_guid[guid] = Array.new
+            h_guid[guid] << face
+            #puts face
+          end
+        end
+      end
+    end
+    #h_guid.each {|key, value| puts "#{key} is #{value}" }
+    h_guid.each do |guid, a_faces|
+      bt_entity = nil
+      # find bt_entity with guid == guid
+      @lib.entities.each do |entity|
+        if entity.guid? == guid
+          bt_entity = entity
+        end
+      end
+      if bt_entity.nil?
+        a_faces.each do |face|
+          require "bim-tools/lib/clsPlanarElement.rb"
+          planar = ClsPlanarElement.new(self, face)
+          planar.set_geometry
+        end
+      else
+        a_faces.each do |face|
+          if bt_entity.source.deleted?
+            bt_entity.source= face #maybee find the best face?
+            bt_entity.update_geometry
+          else
+            #@lib.duplicate_bt_entity(bt_entity, face)
+            #require "bim-tools/lib/clsPlanarElement.rb"
+            #planar = ClsPlanarElement.new(self, face)
+            #planar.set_geometry
+            props = bt_entity.properties_editable
+      #props.each {|key, value| puts "#{key} is #{value}" }
+            require "bim-tools/lib/clsPlanarElement.rb"
+            planar = ClsPlanarElement.new(self, face)
+            planar.set_properties(props)
+            planar.set_geometry
+            @lib.entities do |ent|
+              puts ent.width
+            end
+          end
+        end
+      end
+    end
+  end  
+  
+  # recursive loop that returns an array of all faces in active_model
+  def get_all_faces(entities, a_faces)
+    entities.each do |ent|
+      if ent.typename=="Group"
+        a_faces = a_faces + get_all_faces(ent.entities, a_faces)
+      elsif ent.typename=="ComponentInstance"
+        a_faces = a_faces + get_all_faces(ent.definition.entities, a_faces)
+      else
+        if ent.typename=="Face"
+          a_faces << ent
+        end
+      end
+    end
+    return a_faces
+  end
 
   private
 
@@ -159,11 +267,39 @@ class ClsBtProject
         
         # find all connecting elements that also need updated connections
         @a_entities.each do |bt_entity|
-          bt_entity.source.edges.each do |edge|
-            edge.faces.each do |face|
-              if face != bt_entity.source
-                con_bt_entity = @project.library.source_to_bt_entity(@project, face)
-                @a_con_entities << con_bt_entity
+        
+          # ? if deleted, find lost objects ???
+          if bt_entity.deleted?
+            #scan total project for "lost" bim elements
+            @project.source_recovery
+            #ClsFindIfcEntities.new(@project)
+          else
+            bt_entity.source.edges.each do |edge|
+            
+              # ? if deleted, find lost objects ???
+              if edge.deleted?
+                #scan total project for "lost" bim elements
+              source_recovery
+              #  ClsFindIfcEntities.new(@project)
+              else
+                edge.faces.each do |face|
+                  if face != bt_entity.source
+                    con_bt_entity = @project.library.source_to_bt_entity(@project, face)
+                    if con_bt_entity.nil?
+                      
+                      #scan total project for "lost" bim elements
+                      ClsFindIfcEntities.new(@project)
+                      
+                      #after scanning, re-try adding the object
+                      con_bt_entity = @project.library.source_to_bt_entity(@project, face)
+                      unless con_bt_entity.nil?
+                        @a_con_entities << con_bt_entity
+                      end
+                    else
+                      @a_con_entities << con_bt_entity
+                    end
+                  end
+                end
               end
             end
           end
@@ -189,6 +325,7 @@ class ClsBtProject
     end
   end
   
+  # on open group/component: create new entitiesobserver for possible nested bim-tools entities
   class BtEntitiesObserver < Sketchup::EntitiesObserver
     def initialize(project)
       @project = project
@@ -205,21 +342,39 @@ class ClsBtProject
     
     # what to do if element is changed, and check if part of BtEntity.
     def onElementModified(entities, entity)
-      if entity.typename == "Face"
       
-        # check if entity is part of a building element
-        bt_entity = @project.library.source_to_bt_entity(@project, entity)
+      #if entity.deleted?
+      #  puts "deleted!!!"
+      #end
+      unless entity.deleted?
+      
+
         
-        # this causes way too much overhead because every object is recreated multiple times
-        if bt_entity != nil
+        if entity.typename == "Face"
         
-          # do not refresh geometry when only "hidden"-state is changed
-          if bt_entity.source_hidden? == bt_entity.source.hidden?
-            @project.source_changed(bt_entity)
+          # check if entity is part of a building element
+          bt_entity = @project.library.source_to_bt_entity(@project, entity)
+          
+          # this causes way too much overhead because every object is recreated multiple times
+          if bt_entity != nil
+          
+            # do not refresh geometry when only "hidden"-state is changed
+            if bt_entity.source_hidden? == bt_entity.source.hidden?
+              @project.source_changed(bt_entity)
+            else
+              bt_entity.source_hidden = bt_entity.source.hidden?
+            end
           else
-            bt_entity.source_hidden = bt_entity.source.hidden?
+            guid = entity.get_attribute "ifc", "guid"
+            unless guid.nil?
+              puts "started!"
+              # only start this when faces are deleted!!!
+              @project.source_recovery
+            end
           end
         end
+        
+          
       end
     end
   end

@@ -19,6 +19,8 @@
 #   parameters: project
 #   returns: -
 
+#also check project library for bim-tools entities without geometry AND source, and purge those?
+
 class ClsFindIfcEntities
   def initialize(project)
     @model = Sketchup.active_model
@@ -50,6 +52,13 @@ class ClsFindIfcEntities
   def check_ifc(ent)
     if ent.get_attribute "ifc", "guid"
       guid = ent.get_attribute "ifc", "guid"
+      # possible other method, first collect into array, and THAN filter on type...
+      #if @h_guid_list[guid]
+      #  @h_guid_list[guid] << ent
+      #else
+      #  @h_guid_list[guid] = Array.new
+      #  @h_guid_list[guid] << ent
+      #end
       if ent.typename == "Group"
         if @lib.geometry_to_bt_entity(@project, ent).nil?
           ### add_bt_entity(ent)
@@ -76,17 +85,38 @@ class ClsFindIfcEntities
 
   def add_planars
     @h_guid_list.each do |guid|
-      unless guid[0].nil? && guid[1].nil?
-        require "bim-tools/lib/clsPlanarElement.rb"
-        planar = ClsPlanarElement.new(@project, guid[1][0])
-        planar.geometry=(guid[1][1])
-        width = guid[1][1].get_attribute "ifc", "width"
-        planar.width= width.to_l.to_mm
-        offset = guid[1][1].get_attribute "ifc", "offset"
-        planar.offset= offset.to_l.to_mm
-        planar.name= guid[1][1].get_attribute "ifc", "name"
-        planar.description= guid[1][1].get_attribute "ifc", "description"
-        planar.element_type= guid[1][1].get_attribute "ifc", "type"
+    
+      # if no lost geometry, check if bt-entity exists with deleted source
+      if guid[1][1].nil?
+        unless guid[1][0].nil?
+          find_guid = [0]
+          find_bt_entity = nil
+          @lib.entities.each do |bt_entity|
+            if bt_entity.guid? == find_guid
+              find_bt_entity = bt_entity
+            end
+          end
+          # if source deleted, add this face as new source
+          # ? what if multiple faces with this guid exist??? 
+          unless find_bt_entity.nil?
+            if find_bt_entity.source.deleted?
+              find_bt_entity.source= guid[0]
+            end
+          end
+        end
+      else
+        unless guid[1][0].nil? && guid[1][1].nil?
+          require "bim-tools/lib/clsPlanarElement.rb"
+          planar = ClsPlanarElement.new(@project, guid[1][0])
+          planar.geometry=(guid[1][1])
+          width = guid[1][1].get_attribute "ifc", "width"
+          planar.width= width.to_l.to_mm
+          offset = guid[1][1].get_attribute "ifc", "offset"
+          planar.offset= offset.to_l.to_mm
+          planar.name= guid[1][1].get_attribute "ifc", "name"
+          planar.description= guid[1][1].get_attribute "ifc", "description"
+          planar.element_type= guid[1][1].get_attribute "ifc", "type"
+        end
       end
     end
   end

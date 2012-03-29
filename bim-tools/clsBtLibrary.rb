@@ -100,6 +100,15 @@ class ClsBtLibrary
     bt_entities.uniq!
     return bt_entities
   end
+  
+  #create a clone of a bt_entity based on a new source face
+  def duplicate_bt_entity(bt_entity, source)
+    clone = bt_entity.clone
+    clone.set_guid
+    clone.source= source
+    clone.set_geometry
+    return clone
+  end
 
   private
   def setBtLibrary
@@ -111,4 +120,5 @@ class ClsBtLibrary
     # find all sketchup objects that can be converted to building elements
     # and add them to @lib.
   end
+  
 end

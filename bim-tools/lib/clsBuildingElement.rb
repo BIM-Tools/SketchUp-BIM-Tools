@@ -34,6 +34,17 @@ class ClsBuildingElement
     end
   end
   
+  # if source object is unrecoverable, self_destruct bt_entity
+  def self_destruct
+    unless @source.deleted?
+      @source.erase!
+    end
+    unless @geometry.deleted?
+      @geometry.erase!
+    end
+    @project.library.entities.delete(self)
+  end
+  
   # hide OR geometry OR source
   def geometry_visibility(visibility=true)
     if visibility == true
@@ -47,12 +58,18 @@ class ClsBuildingElement
   def source
     return @source
   end
+  def source=(source)
+    @source = source
+  end
   def geometry
     return @geometry
   end
   
   # returns the volume of the geometry
   def volume?
+    if @geometry.deleted?
+      set_geometry
+    end
     return (@geometry.volume* (25.4 **3)).to_s
   end
   

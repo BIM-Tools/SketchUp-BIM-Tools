@@ -16,10 +16,10 @@
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # roadmap:
-# recover lost BIM-Tools source faces
 # export to IFC
 
 # Changelog:
+# 120319 recover lost BIM-Tools source faces
 # 120314 save BIM-data
 # 120312 create holes in planar elements
 # 120312 prevent duplicate BIM-Tools entities from source faces

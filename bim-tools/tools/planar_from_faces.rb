@@ -59,9 +59,10 @@ class PlanarFromFaces
     @model.selection.clear
 
     # second; create geometry for the created objects, to make sure all connections are known.
+    @project.bt_entities_set_geometry(@a_planars)
     @a_planars.each do |planar|
-      planar.set_geometry #planar class still missing this function!
-      
+    #  planar.set_geometry #planar class still missing this function!
+    #  
       # add the geometry group to the selection
       @model.selection.add planar.geometry
     end
