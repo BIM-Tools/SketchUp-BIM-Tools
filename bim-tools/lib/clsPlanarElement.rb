@@ -59,12 +59,22 @@ class ClsPlanarElement < ClsBuildingElement
   # create the geometry for the planar element
   def set_geometry
     entities = Sketchup.active_model.active_entities
-    if @geometry != nil
-      group = @geometry
-      group.entities.clear!
+    if @geometry.nil?
+      #if @geometry.deleted?
+        group = entities.add_group
+        @geometry = group
+      #else
+      #  group = @geometry
+      #  group.entities.clear!
+      #end
     else
-      group = entities.add_group
-      @geometry = group
+      if @geometry.deleted?
+        group = entities.add_group
+        @geometry = group
+      else
+        group = @geometry
+        group.entities.clear!
+      end
     end
     origin = @source.vertices[0].position
     zaxis = @source.normal
@@ -92,21 +102,26 @@ class ClsPlanarElement < ClsBuildingElement
       #bepaal de zij-planes door de cross-product te berekenen van de 2 vectoren(normal basisplane en vector edge) en 1 punt (edge.start) op te geven.
       normal = @source.normal # 1e vector
       
+      
+      prev_edge = loop.edges.last
+      
       # zoek de verticale plane voor alle edges
       loop.edges.each do |edge|# @source.outer_loop.edges.each do |edge|
         line = edge.line # line bestaat uit een array van 1 punt en 1 vector
         point = line[0] # punt op lijn
         line_vector = line[1] # 2e vector
         
-        # bepaal hoeveel aansluitende vlakken(bt-elementen) er zijn
-        a_connecting_faces = Array.new#Array met alle aansluitende vlakken
+        # determine the number of connecting bt-source-faces
+        a_connecting_faces = Array.new # Array to hold al connecting faces
         connected = edge.faces
         connected.each do |con_ent|
-          if con_ent != @source # als het vlak niet het basisvlak zelf is
-            @project.library.entities.each do |ent| # loop door de library heen # LET OP DAT DIT KAN STOPPEN ALS HET GEVONDEN IS!!!
-              if con_ent == ent.source # als het vlak voorkomt in de bt-library
-                a_connecting_faces << con_ent # voeg het vlak toe aan het array
-              end
+        
+          # check only if this face is not the base-face
+          if con_ent != @source
+          
+            # add only bt-source-faces to array, bt-entities must not react to "normal" faces
+            unless @project.library.source_to_bt_entity(@project, con_ent).nil?
+              a_connecting_faces << con_ent
             end
           end
         end
@@ -137,6 +152,14 @@ class ClsPlanarElement < ClsBuildingElement
           plane_vector = normal.cross line_vector # unit vector voor plane
           plane = [point, plane_vector]
         end
+        
+        #bekijk of de 
+        if edge.line[1].parallel? prev_edge.line[1] # what if the vectors are on the same line but facing each other?
+          perp_plane = [prev_edge.start.position, prev_edge.line[1]]
+          aPlanesVert << perp_plane
+        end
+        prev_edge = edge
+        
         aPlanesVert << plane# voeg toe aan array met verticale planes
       end
       aLoopsVertPlanes << aPlanesVert
@@ -163,6 +186,22 @@ class ClsPlanarElement < ClsBuildingElement
         else
           plane1 = aPlanesVert[i-1]
         end
+        
+        
+        
+        
+        
+        
+        # bug fix:
+        # bepaal endpoint van 1 van de edges op het snijvlak.
+        # bepaal het vlak door dit punt, haaks op de edge
+        # gebruik dit vlak om de snijpunten te berekenen
+        
+        
+        
+        
+        
+        
         # if both planes are parallel then there is no intersection between planes
         line_start = Geom.intersect_plane_plane(plane1, plane)
         
@@ -181,11 +220,25 @@ class ClsPlanarElement < ClsBuildingElement
         pts[3] = Geom.intersect_line_plane(line_end, self.planes[0])
         
         #if nOuterLoopNum == nLoopCount
+        unless aFacePtsTop.last == pts[0]
           aFacePtsTop << pts[0]
+        end
+        unless aFacePtsBottom.last == pts[1]
           aFacePtsBottom << pts[1]
+        end
         #end
         
-        face = group.entities.add_face pts
+        #pts.uniq!
+        #door het extra tussen gevoegde vlak ontstaan dubbele punten?
+        #puts pts
+        
+        # when a face has duplicate points it cannot be created, temporary solution: skip face
+        begin
+          face = group.entities.add_face pts
+        rescue
+          puts "error: failed to create face"
+        end
+        
         i += 1
       end
       
