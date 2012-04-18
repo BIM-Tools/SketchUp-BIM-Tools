@@ -161,7 +161,8 @@ class ClsBtProject
     #puts "source recovery started!"
     h_guid = Hash.new
     #a_faces = Array.new
-    a_faces = get_all_faces(@entities, Array.new)
+    #a_faces = get_all_faces(@entities, Array.new)
+    a_faces = get_active_faces
     #puts a_faces.length
     a_faces.each do |face|
       if face.get_attribute "ifc", "guid"
@@ -231,6 +232,19 @@ class ClsBtProject
         if ent.typename=="Face"
           a_faces << ent
         end
+      end
+    end
+    return a_faces
+  end
+  
+  # NOT recursive version, only searches in active collection!
+  def get_active_faces()
+    @model = Sketchup.active_model
+    entities = @model.active_entities
+    a_faces = Array.new
+    entities.each do |ent|
+      if ent.typename=="Face"
+        a_faces << ent
       end
     end
     return a_faces
@@ -342,14 +356,7 @@ class ClsBtProject
     
     # what to do if element is changed, and check if part of BtEntity.
     def onElementModified(entities, entity)
-      
-      #if entity.deleted?
-      #  puts "deleted!!!"
-      #end
       unless entity.deleted?
-      
-
-        
         if entity.typename == "Face"
         
           # check if entity is part of a building element
@@ -367,8 +374,8 @@ class ClsBtProject
           else
             guid = entity.get_attribute "ifc", "guid"
             unless guid.nil?
-              puts "started!"
-              # only start this when faces are deleted!!!
+              puts "Search for missing faces"
+              # only start this when faces are deleted?
               @project.source_recovery
             end
           end
