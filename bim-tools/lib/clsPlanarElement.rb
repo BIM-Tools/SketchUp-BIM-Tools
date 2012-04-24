@@ -23,7 +23,7 @@ class ClsPlanarElement < ClsBuildingElement
   def initialize(project, face, width=nil, offset=nil) # profilecomponent=width, offset
     @project = project
     @source = face
-    @source_hidden = false # for function in ClsBuildingElement
+    @source_hidden = @project.visible_geometry? # for function in ClsBuildingElement
     @geometry = nil
     @aPlanesHor = nil
     @element_type = nil
