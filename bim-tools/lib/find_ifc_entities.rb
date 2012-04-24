@@ -89,7 +89,7 @@ class ClsFindIfcEntities
       # if no lost geometry, check if bt-entity exists with deleted source
       if guid[1][1].nil?
         unless guid[1][0].nil?
-          find_guid = [0]
+          find_guid = [0] #?????????????????????????
           find_bt_entity = nil
           @lib.entities.each do |bt_entity|
             if bt_entity.guid? == find_guid
@@ -105,7 +105,7 @@ class ClsFindIfcEntities
           end
         end
       else
-        unless guid[1][0].nil? && guid[1][1].nil?
+        unless guid[1][0].nil? || guid[1][1].nil?
           require "bim-tools/lib/clsPlanarElement.rb"
           planar = ClsPlanarElement.new(@project, guid[1][0])
           planar.geometry=(guid[1][1])

@@ -29,10 +29,22 @@ class ClsBtProject
     @project = self
     require 'bim-tools/clsBtLibrary.rb'
     require 'bim-tools/lib/find_ifc_entities.rb'
+    
+    # set initial value for toggle button
+    toggle_value = @model.get_attribute "bim-tools", "visible_geometry"
+    
+    if toggle_value.nil?
+      # variable keeps track of visibility source or geometry
+      @visible_geometry = true
+      @model.set_attribute "bim-tools", "visible_geometry", "true"
+    elsif toggle_value == "false"
+      @visible_geometry = false
+    else
+      @visible_geometry = true
+    end
+    
     @lib = ClsBtLibrary.new # would ClsBtEntities be a better name?
     
-    # variable keeps track of visibility source or geometry
-    @visible_geometry = true
     @source_tracker = SourceTracker.new(self)
     #set_id(id) # do or do not use "project" in method names?
     #set_name(name)
@@ -40,7 +52,7 @@ class ClsBtProject
     
     # When creating a new project, check if there are any IFC entities present in the current SketchUp model
     ClsFindIfcEntities.new(self)
-    
+
     #set observers
     Sketchup.active_model.entities.add_observer(BtEntitiesObserver.new(self))
     
@@ -83,12 +95,13 @@ class ClsBtProject
   # switch between source and geometry visibility
   def toggle_geometry()
     # start undo section
-    model = Sketchup.active_model
-    model.start_operation("Toggle source/geometry", disable_ui=true) # Start of operation/undo section
+    @model.start_operation("Toggle source/geometry", disable_ui=true) # Start of operation/undo section
     if @visible_geometry == true
       @visible_geometry = false
+      @model.set_attribute "bim-tools", "visible_geometry", "false"
     else
       @visible_geometry = true
+      @model.set_attribute "bim-tools", "visible_geometry", "true"
     end
     
     @lib.entities.each do |entity|
@@ -96,8 +109,8 @@ class ClsBtProject
         entity.geometry_visibility(@visible_geometry)
       end
     end
-    model.commit_operation # End of operation/undo section
-    model.active_view.refresh # Refresh model
+    @model.commit_operation # End of operation/undo section
+    @model.active_view.refresh # Refresh model
     
     # write true or false as attribute
   end
