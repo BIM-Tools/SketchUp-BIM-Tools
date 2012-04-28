@@ -73,6 +73,8 @@ class ClsPlanarElement < ClsBuildingElement
         @geometry = group
       else
         group = @geometry
+        
+        # gets fired furtheron in the script, just before drawing so temporary group also gets deleted
         group.entities.clear!
       end
     end
@@ -86,7 +88,12 @@ class ClsPlanarElement < ClsBuildingElement
     nOuterLoopNum = 0
     nLoopCount = 0
     
-    @source.loops.each do |loop|
+    cutting_loops = get_cutting_loops[0]
+    temp_group = get_cutting_loops[1]
+    
+    loops = @source.loops + get_cutting_loops[0]
+    
+    loops.each do |loop|
       
       # keep the loops array-index of the outer loop
       if loop == @source.outer_loop
@@ -169,6 +176,10 @@ class ClsPlanarElement < ClsBuildingElement
     
     # array will hold all temporary top and bottom faces(that is all exept that of the outer loop)
     aTempFaces = Array.new
+    
+    
+    #placed here so temporary group also gets deleted
+    group.entities.clear!
     
     aLoopsVertPlanes.each do |aPlanesVert|
       
@@ -276,6 +287,66 @@ class ClsPlanarElement < ClsBuildingElement
     
     # save all properties as attributes in the group
     set_attributes
+  end
+  
+  # create array of loop objects for face-cutting instances
+  def get_cutting_loops
+  
+    # start only if get_glued_instances is not nil???????
+    
+    aLoops = Array.new
+    group = @geometry.entities.add_group
+    
+    @source.get_glued_instances.each do |instance|
+    
+      transform =  group.transformation.invert! * instance.transformation
+    
+      # copy all edges that are on the x-y plane to the new group
+      instance.definition.entities.each do |entity|
+        if entity.typename == "Edge"
+          if entity.start.position.z == 0
+            if entity.end.position.z == 0
+              new_start = entity.start.position.transform transform
+              new_end = entity.end.position.transform transform
+              group.entities.add_edges new_start, new_end
+            end
+          end
+        end
+      end
+    
+    end
+    
+    # intersect all edges
+    faces=[]
+    group.entities.each do |entity|
+      faces << entity
+    end
+    group.entities.intersect_with false, group.transformation, group.entities, group.transformation, true, faces
+    
+    # create all possible faces
+    group.entities.each do |entity|
+      if entity.typename == "Edge"
+        entity.find_faces
+      end
+    end
+    
+    # delete unneccesary edges
+    group.entities.each do |entity|
+      if entity.typename == "Edge"
+        if entity.faces.length != 1
+          entity.erase!
+        end
+      end
+    end
+    
+    #find all outer loops
+    group.entities.each do |entity|
+      if entity.typename == "Face"
+        aLoops << entity.outer_loop
+      end
+    end
+    
+    return Array[aLoops, group]
   end
   
   def possible_types

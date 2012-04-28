@@ -392,9 +392,23 @@ class ClsBtProject
               @project.source_recovery
             end
           end
+        elsif entity.typename == "ComponentInstance"
+          unless entity.glued_to.nil?
+            source = entity.glued_to
+            
+            # run only if added entity cuts_opening
+            if entity.definition.behavior.cuts_opening?
+            
+              # check if entity is part of a building element
+              bt_entity = @project.library.source_to_bt_entity(@project, source)
+              
+              # if it is a bt-entity, redraw geometry
+              unless bt_entity.nil?
+                bt_entity.update_geometry
+              end
+            end
+          end
         end
-        
-          
       end
     end
   end
