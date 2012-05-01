@@ -19,6 +19,7 @@
 # export to IFC
 
 # Changelog:
+# 120428 added cutting components
 # 120319 recover lost BIM-Tools source faces
 # 120314 save BIM-data
 # 120312 create holes in planar elements
@@ -34,6 +35,6 @@ require 'sketchup.rb'
 require 'extensions.rb'
 
 bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-bimtools.version = '0.10.2'
+bimtools.version = '0.10.3'
 bimtools.description = "Tools to create building parts and export these to IFC."
 Sketchup.register_extension bimtools, true
