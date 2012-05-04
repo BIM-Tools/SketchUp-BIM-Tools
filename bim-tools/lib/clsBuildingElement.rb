@@ -36,8 +36,10 @@ class ClsBuildingElement
   
   # if source object is unrecoverable, self_destruct bt_entity
   def self_destruct
+    @deleted = true
     unless @source.deleted?
-      @source.erase!
+      source.hidden= false
+      #@source.erase!
     end
     unless @geometry.deleted?
       @geometry.erase!
@@ -79,6 +81,9 @@ class ClsBuildingElement
   end
   def possible_types
     return Array["Wall", "Floor", "Roof", "Column", "Window", "Door"]
+  end
+  def marked_for_deletion?
+    return @deleted
   end
   def element_type?
     return @element_type
