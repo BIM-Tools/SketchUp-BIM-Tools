@@ -47,6 +47,13 @@ class BtToolbar
     cmd_toggle_geometry = UI::Command.new("Toggle between sources and geometry") {
       @project.toggle_geometry()
     }
+    
+    # Remove BIM properties from selection
+    cmd_clear = UI::Command.new("Remove BIM properties from selection") {
+      require "bim-tools/tools/clear_properties.rb"
+      selection = Sketchup.active_model.selection
+      ClearProperties.new(@project, selection)
+    }
 
     cmd_bimtools.small_icon = "../images/bimtools_small.png"
     cmd_bimtools.large_icon = "../images/bimtools_large.png"
@@ -66,6 +73,12 @@ class BtToolbar
     cmd_toggle_geometry.tooltip = "Toggle between sources and geometry"
     cmd_toggle_geometry.status_bar_text = "Toggle between sources and geometry"
     bt_toolbar = bt_toolbar.add_item cmd_toggle_geometry
+    
+    cmd_clear.small_icon = "../images/clear_small.png"
+    cmd_clear.large_icon = "../images/clear_large.png"
+    cmd_clear.tooltip = "Remove BIM properties"
+    cmd_clear.status_bar_text = "Remove BIM properties from selection"
+    bt_toolbar = bt_toolbar.add_item cmd_clear
 
     bt_toolbar.show
   end

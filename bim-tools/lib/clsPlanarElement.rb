@@ -23,6 +23,7 @@ class ClsPlanarElement < ClsBuildingElement
   def initialize(project, face, width=nil, offset=nil) # profilecomponent=width, offset
     @project = project
     @source = face
+    @deleted = false
     @source_hidden = @project.visible_geometry? # for function in ClsBuildingElement
     @geometry = nil
     @aPlanesHor = nil
@@ -59,234 +60,251 @@ class ClsPlanarElement < ClsBuildingElement
   # create the geometry for the planar element
   def set_geometry
     entities = Sketchup.active_model.active_entities
-    if @geometry.nil?
-      #if @geometry.deleted?
-        group = entities.add_group
-        @geometry = group
-      #else
-      #  group = @geometry
-      #  group.entities.clear!
-      #end
-    else
-      if @geometry.deleted?
-        group = entities.add_group
-        @geometry = group
+    
+    # do not update geometry when the planar element is in the process of beeing deleted(marked for deletion)
+    if @deleted == false
+      if @geometry.nil?
+        #if @geometry.deleted?
+          group = entities.add_group
+          @geometry = group
+        #else
+        #  group = @geometry
+        #  group.entities.clear!
+        #end
       else
-        group = @geometry
-        
-        # gets fired furtheron in the script, just before drawing so temporary group also gets deleted
-        group.entities.clear!
-      end
-    end
-    origin = @source.vertices[0].position
-    zaxis = @source.normal
-    t_base_plane = Geom::Transformation.new(origin, zaxis)
-    group.transformation = t_base_plane
-    
-    # array that holds the vertical-planes-array for every loop
-    aLoopsVertPlanes = Array.new
-    nOuterLoopNum = 0
-    nLoopCount = 0
-    
-    cutting_loops = get_cutting_loops[0]
-    temp_group = get_cutting_loops[1]
-    
-    loops = @source.loops + get_cutting_loops[0]
-    
-    loops.each do |loop|
-      
-      # keep the loops array-index of the outer loop
-      if loop == @source.outer_loop
-        nOuterLoopNum == nLoopCount
-      end
-      
-      nLoopCount += 1
-      
-      aPlanesVert = Array.new
-      
-      # let op! als 2 vlakken gelijk zijn kan geen snijlijn worden uitgerekend!
-      
-      #bepaal de zij-planes door de cross-product te berekenen van de 2 vectoren(normal basisplane en vector edge) en 1 punt (edge.start) op te geven.
-      normal = @source.normal # 1e vector
-      
-      
-      prev_edge = loop.edges.last
-      
-      # zoek de verticale plane voor alle edges
-      loop.edges.each do |edge|# @source.outer_loop.edges.each do |edge|
-        line = edge.line # line bestaat uit een array van 1 punt en 1 vector
-        point = line[0] # punt op lijn
-        line_vector = line[1] # 2e vector
-        
-        # determine the number of connecting bt-source-faces
-        a_connecting_faces = Array.new # Array to hold al connecting faces
-        connected = edge.faces
-        connected.each do |con_ent|
-        
-          # check only if this face is not the base-face
-          if con_ent != @source
+        if @geometry.deleted?
+          group = entities.add_group
+          @geometry = group
+        else
+          group = @geometry
           
-            # add only bt-source-faces to array, bt-entities must not react to "normal" faces
-            unless @project.library.source_to_bt_entity(@project, con_ent).nil?
-              a_connecting_faces << con_ent
+          # gets fired furtheron in the script, just before drawing so temporary group also gets deleted
+          group.entities.clear!
+        end
+      end
+      origin = @source.vertices[0].position
+      zaxis = @source.normal
+      t_base_plane = Geom::Transformation.new(origin, zaxis)
+      group.transformation = t_base_plane
+      
+      # array that holds the vertical-planes-array for every loop
+      aLoopsVertPlanes = Array.new
+      nOuterLoopNum = 0
+      nLoopCount = 0
+      
+      cutting_loops = get_cutting_loops[0]
+      temp_group = get_cutting_loops[1]
+      
+      loops = @source.loops + get_cutting_loops[0]
+      
+      loops.each do |loop|
+        
+        # keep the loops array-index of the outer loop
+        if loop == @source.outer_loop
+          nOuterLoopNum == nLoopCount
+        end
+        
+        nLoopCount += 1
+        
+        aPlanesVert = Array.new
+        
+        # let op! als 2 vlakken gelijk zijn kan geen snijlijn worden uitgerekend!
+        
+        #bepaal de zij-planes door de cross-product te berekenen van de 2 vectoren(normal basisplane en vector edge) en 1 punt (edge.start) op te geven.
+        normal = @source.normal # 1e vector
+        
+        
+        prev_edge = loop.edges.last
+        
+        # zoek de verticale plane voor alle edges
+        loop.edges.each do |edge|# @source.outer_loop.edges.each do |edge|
+          line = edge.line # line bestaat uit een array van 1 punt en 1 vector
+          point = line[0] # punt op lijn
+          line_vector = line[1] # 2e vector
+          
+          # determine the number of connecting bt-source-faces
+          a_connecting_faces = Array.new # Array to hold al connecting faces
+          connected = edge.faces
+          connected.each do |con_ent|
+          
+            # check only if this face is not the base-face
+            if con_ent != @source
+            
+              # add only bt-source-faces to array, bt-entities must not react to "normal" faces
+              unless @project.library.source_to_bt_entity(@project, con_ent).nil?
+                a_connecting_faces << con_ent
+              end
             end
           end
-        end
-        
-        # bekijk of het vlak verticaal moet zijn of moet aansluiten op naastliggende geometrie
-        if a_connecting_faces.length == 1
-          # if source and connecting faces are parallel, then also create vertical end.
-          if @source.normal == a_connecting_faces[0].normal
+          
+          # bekijk of het vlak verticaal moet zijn of moet aansluiten op naastliggende geometrie
+          if a_connecting_faces.length == 1
+            # if source and connecting faces are parallel, then also create vertical end.
+            if @source.normal == a_connecting_faces[0].normal
+              plane_vector = normal.cross line_vector # unit vector voor plane
+              plane = [point, plane_vector]
+            else
+              #vector1 = a_connecting_faces[0].normal + @source.normal # tel de normal-vectoren van de aansluitende vlakken bij elkaar op, dit geeft een vector met de helft van de hoek.
+              #vector2 = line_vector
+              #plane_vector = vector1.cross line_vector
+              ## alternatieve methode die rekening houdt met de dikte van de planar:
+              a_connecting_faces[0]
+              connecting_entity = find_bt_entity_for_face(a_connecting_faces[0])
+              bottom_line = Geom.intersect_plane_plane(self.planes[0], connecting_entity.planes[0])
+              top_line = Geom.intersect_plane_plane(self.planes[1], connecting_entity.planes[1])
+              ## line = [point3d, vector3d]
+              point1 = bottom_line[0]
+              point2 = bottom_line[0] + bottom_line[1]
+              point3 = top_line[0]
+              plane = Geom.fit_plane_to_points point1, point2, point3
+            end
+          else
+            # verticaal vlak
             plane_vector = normal.cross line_vector # unit vector voor plane
             plane = [point, plane_vector]
-          else
-            #vector1 = a_connecting_faces[0].normal + @source.normal # tel de normal-vectoren van de aansluitende vlakken bij elkaar op, dit geeft een vector met de helft van de hoek.
-            #vector2 = line_vector
-            #plane_vector = vector1.cross line_vector
-            ## alternatieve methode die rekening houdt met de dikte van de planar:
-            a_connecting_faces[0]
-            connecting_entity = find_bt_entity_for_face(a_connecting_faces[0])
-            bottom_line = Geom.intersect_plane_plane(self.planes[0], connecting_entity.planes[0])
-            top_line = Geom.intersect_plane_plane(self.planes[1], connecting_entity.planes[1])
-            ## line = [point3d, vector3d]
-            point1 = bottom_line[0]
-            point2 = bottom_line[0] + bottom_line[1]
-            point3 = top_line[0]
-            plane = Geom.fit_plane_to_points point1, point2, point3
           end
-        else
-          # verticaal vlak
-          plane_vector = normal.cross line_vector # unit vector voor plane
-          plane = [point, plane_vector]
+          
+          #bekijk of de 
+          if edge.line[1].parallel? prev_edge.line[1] # what if the vectors are on the same line but facing each other?
+            perp_plane = [prev_edge.start.position, prev_edge.line[1]]
+            aPlanesVert << perp_plane
+          end
+          prev_edge = edge
+          
+          aPlanesVert << plane# voeg toe aan array met verticale planes
         end
-        
-        #bekijk of de 
-        if edge.line[1].parallel? prev_edge.line[1] # what if the vectors are on the same line but facing each other?
-          perp_plane = [prev_edge.start.position, prev_edge.line[1]]
-          aPlanesVert << perp_plane
-        end
-        prev_edge = edge
-        
-        aPlanesVert << plane# voeg toe aan array met verticale planes
-      end
-      aLoopsVertPlanes << aPlanesVert
-    end
-    
-    nLoopCount = 0
-    
-    # array will hold all temporary top and bottom faces(that is all exept that of the outer loop)
-    aTempFaces = Array.new
-    
-    
-    #placed here so temporary group also gets deleted
-    group.entities.clear!
-    
-    aLoopsVertPlanes.each do |aPlanesVert|
-      
-      # collect the needed points for the top and bottom faces in an array
-      aFacePtsTop = Array.new
-      aFacePtsBottom = Array.new
-      
-      # create side faces on every base-face edge
-      i = 0
-      j = aPlanesVert.length
-      while i < j do
-        plane = aPlanesVert[i]
-        if i == 0
-          plane1 = aPlanesVert[j-1]
-        else
-          plane1 = aPlanesVert[i-1]
-        end
-        
-        
-        
-        
-        
-        
-        # bug fix:
-        # bepaal endpoint van 1 van de edges op het snijvlak.
-        # bepaal het vlak door dit punt, haaks op de edge
-        # gebruik dit vlak om de snijpunten te berekenen
-        
-        
-        
-        
-        
-        
-        # if both planes are parallel then there is no intersection between planes
-        line_start = Geom.intersect_plane_plane(plane1, plane)
-        
-        if i == j - 1
-          plane2 = aPlanesVert[0]
-        else
-          plane2 = aPlanesVert[i+1]
-        end
-        # if both planes are parallel then there is no intersection between planes
-        line_end = Geom.intersect_plane_plane(plane2, plane)
-        
-        pts = []
-        pts[0] = Geom.intersect_line_plane(line_start, self.planes[0])
-        pts[1] = Geom.intersect_line_plane(line_start, self.planes[1])
-        pts[2] = Geom.intersect_line_plane(line_end, self.planes[1])
-        pts[3] = Geom.intersect_line_plane(line_end, self.planes[0])
-        
-        #if nOuterLoopNum == nLoopCount
-        unless aFacePtsTop.last == pts[0]
-          aFacePtsTop << pts[0]
-        end
-        unless aFacePtsBottom.last == pts[1]
-          aFacePtsBottom << pts[1]
-        end
-        #end
-        
-        #pts.uniq!
-        #door het extra tussen gevoegde vlak ontstaan dubbele punten?
-        #puts pts
-        
-        # when a face has duplicate points it cannot be created, temporary solution: skip face
-        begin
-          face = group.entities.add_face pts
-        rescue
-          puts "error: failed to create face"
-        end
-        
-        i += 1
+        aLoopsVertPlanes << aPlanesVert
       end
       
-      # create the top and bottom faces
-      face_top = group.entities.add_face aFacePtsTop
-      face_bottom = group.entities.add_face aFacePtsBottom
+      nLoopCount = 0
       
-      # remove all temporary top and bottom faces
-      unless nOuterLoopNum == nLoopCount
-        face_top.erase!
-        face_bottom.erase!
+      # array will hold all temporary top and bottom faces(that is all exept that of the outer loop)
+      aTempFaces = Array.new
+      
+      
+      #placed here so temporary group also gets deleted
+      group.entities.clear!
+      
+      aLoopsVertPlanes.each do |aPlanesVert|
+        
+        # collect the needed points for the top and bottom faces in an array
+        aFacePtsTop = Array.new
+        aFacePtsBottom = Array.new
+        
+        # create side faces on every base-face edge
+        i = 0
+        j = aPlanesVert.length
+        while i < j do
+          plane = aPlanesVert[i]
+          if i == 0
+            plane1 = aPlanesVert[j-1]
+          else
+            plane1 = aPlanesVert[i-1]
+          end
+          
+          
+          
+          
+          
+          
+          # bug fix:
+          # bepaal endpoint van 1 van de edges op het snijvlak.
+          # bepaal het vlak door dit punt, haaks op de edge
+          # gebruik dit vlak om de snijpunten te berekenen
+          
+          
+          
+          
+          
+          
+          # if both planes are parallel then there is no intersection between planes
+          line_start = Geom.intersect_plane_plane(plane1, plane)
+          
+          if i == j - 1
+            plane2 = aPlanesVert[0]
+          else
+            plane2 = aPlanesVert[i+1]
+          end
+          # if both planes are parallel then there is no intersection between planes
+          line_end = Geom.intersect_plane_plane(plane2, plane)
+          
+          pts = []
+          pts[0] = Geom.intersect_line_plane(line_start, self.planes[0])
+          pts[1] = Geom.intersect_line_plane(line_start, self.planes[1])
+          pts[2] = Geom.intersect_line_plane(line_end, self.planes[1])
+          pts[3] = Geom.intersect_line_plane(line_end, self.planes[0])
+          
+          #if nOuterLoopNum == nLoopCount
+          unless aFacePtsTop.last == pts[0]
+            aFacePtsTop << pts[0]
+          end
+          unless aFacePtsBottom.last == pts[1]
+            aFacePtsBottom << pts[1]
+          end
+          #end
+          
+          #pts.uniq!
+          #door het extra tussen gevoegde vlak ontstaan dubbele punten?
+          #puts pts
+          
+          # when a face has duplicate points it cannot be created, temporary solution: skip face
+          begin
+            face = group.entities.add_face pts
+          rescue
+            puts "error: failed to create face"
+          end
+          
+  #still errors
+          vector = Geom::Vector3d.new @source.normal
+          vector2 = Geom::Vector3d.new face.normal
+          d = vector.dot vector2
+          
+          unless d.abs < 0.000001
+            
+            #better not recreate layer every time?
+            Sketchup.active_model.layers.add "element_connections"
+            face.layer= "element_connections"
+          end
+          
+          
+          i += 1
+        end
+        
+        # create the top and bottom faces
+        face_top = group.entities.add_face aFacePtsTop
+        face_bottom = group.entities.add_face aFacePtsBottom
+        
+        # remove all temporary top and bottom faces
+        unless nOuterLoopNum == nLoopCount
+          face_top.erase!
+          face_bottom.erase!
+        end
+        nLoopCount += 1
       end
-      nLoopCount += 1
+  
+      # move group entities back in position with the inverse transformation
+      a_entities = Array.new
+      group.entities.each do |entity| # pas de transformatie toe op de volledige inhoud van de group, dit kan beter vooraf gedaan worden...
+        a_entities << entity
+      end
+      group.entities.transform_entities(t_base_plane.invert!, a_entities) # misschien kan beter transform_by_vectors gebruikt worden?
+      
+      # reset bounding box
+      group.entities.parent.invalidate_bounds
+      
+      # set the group as the planar´s geometry
+      #@geometry = group
+      
+      # check if source or geometry must be hidden
+      if @project.visible_geometry? == true
+        @source.hidden=true
+      else
+        @geometry.hidden=true
+      end
+      
+      # save all properties as attributes in the group
+      set_attributes
     end
-
-    # move group entities back in position with the inverse transformation
-    a_entities = Array.new
-    group.entities.each do |entity| # pas de transformatie toe op de volledige inhoud van de group, dit kan beter vooraf gedaan worden...
-      a_entities << entity
-    end
-    group.entities.transform_entities(t_base_plane.invert!, a_entities) # misschien kan beter transform_by_vectors gebruikt worden?
-    
-    # reset bounding box
-    group.entities.parent.invalidate_bounds
-    
-    # set the group as the planar´s geometry
-    #@geometry = group
-    
-    # check if source or geometry must be hidden
-    if @project.visible_geometry? == true
-      @source.hidden=true
-    else
-      @geometry.hidden=true
-    end
-    
-    # save all properties as attributes in the group
-    set_attributes
   end
   
   # create array of loop objects for face-cutting instances
