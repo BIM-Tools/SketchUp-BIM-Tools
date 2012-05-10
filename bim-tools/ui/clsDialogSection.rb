@@ -25,15 +25,21 @@ class ClsDialogSection
   def html
     if @status == true
       output = "
-<a href='skp:html_update@" + @name + "=minimize'><h1 style='h1 {background-image: url(" + @dialog.imagepath + "minimize.png)}'>" + @name + "</h1></a><hr />
+<a href='skp:min_max@" + @name + "=false'><h1 style='background-image: url(" + @dialog.imagepath + "minimize.png)'>" + @name + "</h1></a><hr />
       "
       output = output + @html_content
       return output
     else
       return"
-<a href='skp:html_update@" + @name + "=maximize'><h1 style='h1 {background-image: url(" + @dialog.imagepath + "maximize.png)}'>" + @name + "</h1></a><hr />
+<a href='skp:min_max@" + @name + "=true'><h1 style='background-image: url(" + @dialog.imagepath + "maximize.png)'>" + @name + "</h1></a><hr />
       "
     end
+  end
+  def minimize
+    @status = false
+  end
+  def maximize
+    @status = true
   end
   def refresh_dialog
     @dialog.refresh

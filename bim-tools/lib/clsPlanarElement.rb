@@ -250,6 +250,7 @@ class ClsPlanarElement < ClsBuildingElement
           # when a face has duplicate points it cannot be created, temporary solution: skip face
           begin
             face = group.entities.add_face pts
+            face.material= @source.material
           rescue
             puts "error: failed to create face"
           end
@@ -265,14 +266,15 @@ class ClsPlanarElement < ClsBuildingElement
             Sketchup.active_model.layers.add "element_connections"
             face.layer= "element_connections"
           end
-          
-          
+
           i += 1
         end
         
         # create the top and bottom faces
         face_top = group.entities.add_face aFacePtsTop
+        face_top.material= @source.material
         face_bottom = group.entities.add_face aFacePtsBottom
+        face_bottom.material= @source.back_material
         
         # remove all temporary top and bottom faces
         unless nOuterLoopNum == nLoopCount
@@ -305,6 +307,7 @@ class ClsPlanarElement < ClsBuildingElement
       # save all properties as attributes in the group
       set_attributes
     end
+    #@geometry.material= @source.material
   end
   
   # create array of loop objects for face-cutting instances
