@@ -19,6 +19,8 @@
 # export to IFC
 
 # Changelog:
+# 120509 re-implemented walls from edges function
+# 120509 added materials to planars
 # 120504 added remove BIM properties button
 # 120503 added layer so element connections can be hidden
 # 120428 added cutting components

@@ -43,6 +43,9 @@ class Bt_dialog
     
     @h_sections = Hash.new
     
+    # start min/maximizer
+    min_max
+    
     # define sections
     require 'bim-tools/ui/clsEntityInfo.rb'
     entityInfo = ClsEntityInfo.new(self)
@@ -88,6 +91,23 @@ class Bt_dialog
     </body>
     </html>
     "
+  end
+  
+  #action to be started on webdialog minimize/maximize
+  def min_max
+    @dialog.add_action_callback("min_max") {|dialog, params|
+
+      #split string into separate values
+      values =  params.split("=")
+      section = values[0]
+      max = values[1]
+      if max == "true"
+        @h_sections[section].maximize
+      else
+        @h_sections[section].minimize
+      end
+      @dialog.set_html( html )
+    }
   end
   def webdialog
     return @dialog
