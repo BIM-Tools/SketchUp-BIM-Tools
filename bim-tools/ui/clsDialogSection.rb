@@ -59,8 +59,9 @@ class ClsDialogSection
     # array[name, Shown name, field_type, unit, value]
 
     a_fields = Array.new
-    a_fields << Array["width", "Width", "text", 300, "length"]
+    a_fields << Array["length", "Length", "text", 3000, "length"]
     a_fields << Array["height", "Height", "text", 2600, "length"]
+    a_fields << Array["width", "Thickness", "text", 300, "length"]
     a_fields << Array["offset", "Offset", "text", 150, "length"]
     a_fields << Array["element_type", "Element type", "select", "Wall",]
     a_fields << Array["profile", "Profile", "text", "definition",]

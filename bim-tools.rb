@@ -19,7 +19,7 @@
 # export to IFC
 
 # Changelog:
-# 120509 re-implemented walls from edges function
+# 120515 re-implemented walls from edges function
 # 120509 added materials to planars
 # 120504 added remove BIM properties button
 # 120503 added layer so element connections can be hidden
@@ -39,6 +39,6 @@ require 'sketchup.rb'
 require 'extensions.rb'
 
 bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-bimtools.version = '0.10.4'
+bimtools.version = '0.10.5'
 bimtools.description = "Tools to create building parts and export these to IFC."
 Sketchup.register_extension bimtools, true

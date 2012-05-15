@@ -17,18 +17,20 @@
 
 class WallsFromEdges
   def initialize(project, a_edges, h_properties)
-    require "bim-tools/tools/planar_from_faces.rb"
     @model = Sketchup.active_model
     @entities = @model.active_entities
     @project = project
-    @height = h_properties["height"]
+    @height = h_properties["height"].mm
+    @width = h_properties["width"]
+    @offset = h_properties["offset"]
+    @a_planars = Array.new
     
     # start undo section
     @model.start_operation("Create walls from edges", disable_ui=true) # Start of operation/undo section
     
     a_faces = create_faces(a_edges)
 
-    planar_from_faces = PlanarFromFaces.new(@project, a_faces)
+    planar_from_faces = planar_from_faces(@project, a_faces)
     @model.select_tool planar_from_faces
     
     @model.commit_operation # End of operation/undo section
@@ -50,4 +52,39 @@ class WallsFromEdges
     end
     return a_faces
   end
+  
+  # this part could be merged with the same part in planar_from_faces
+  def planar_from_faces(project, a_faces)
+  
+    # require planar class
+    require "bim-tools/lib/clsPlanarElement.rb"
+    
+    # first; create objects 
+    a_faces.each do |source|
+
+      # check if a BIM-Tools entity already exists for the source face
+      if @project.library.source_to_bt_entity(@project, source).nil?
+        planar = ClsPlanarElement.new(@project, source)
+        planar.width= @width
+        planar.offset= @offset
+        @a_planars << planar
+      end
+    end
+    
+    # clear the current selection to replace the selected source faces with geometry groups
+    @model.selection.clear
+
+    # second; create geometry for the created objects, to make sure all connections are known.
+    @project.bt_entities_set_geometry(@a_planars)
+    @a_planars.each do |planar|
+
+      # add the geometry group to the selection
+      @model.selection.add planar.geometry
+    end
+    
+    # activate select tool
+    Sketchup.send_action(21022)
+    return @a_planars
+  end
+  
 end

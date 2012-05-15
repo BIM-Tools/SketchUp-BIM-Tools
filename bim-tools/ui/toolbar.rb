@@ -55,21 +55,6 @@ class BtToolbar
       ClearProperties.new(@project, selection)
     }
 
-    cmd_walls_from_edges = UI::Command.new("Creates walls elements from selected edges") {
-      selection = Sketchup.active_model.selection
-      if selection.length > 0
-        require "bim-tools/tools/walls_from_edges.rb"
-        h_properties = Hash.new
-        h_properties["height"] = 2400.mm
-        a_edges = Array.new
-        selection.each do |entity|
-          if entity.typename == "Edge"
-            a_edges << entity
-          end
-        end
-        walls_from_edges = WallsFromEdges.new(@project, a_edges, h_properties)
-      end
-    }
 
     cmd_bimtools.small_icon = "../images/bimtools_small.png"
     cmd_bimtools.large_icon = "../images/bimtools_large.png"
@@ -95,12 +80,6 @@ class BtToolbar
     cmd_clear.tooltip = "Remove BIM properties"
     cmd_clear.status_bar_text = "Remove BIM properties from selection"
     bt_toolbar = bt_toolbar.add_item cmd_clear
-
-    cmd_walls_from_edges.small_icon = "../images/icon_create_from_faces_small.png"
-    cmd_walls_from_edges.large_icon = "../images/icon_create_from_faces_large.png"
-    cmd_walls_from_edges.tooltip = "Creates walls elements from selected edges"
-    cmd_walls_from_edges.status_bar_text = "Creates walls elements from selected edges"
-    bt_toolbar = bt_toolbar.add_item cmd_walls_from_edges
     
     bt_toolbar.show
   end

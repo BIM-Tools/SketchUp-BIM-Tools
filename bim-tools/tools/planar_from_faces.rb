@@ -29,7 +29,6 @@ class PlanarFromFaces
   end
   
   def activate
-    Sketchup.vcb_label = "Thickness"
     planar_from_faces(@project, @a_sources)
   end
 
@@ -40,7 +39,6 @@ class PlanarFromFaces
   
     # start undo section
     @model.start_operation("Create planars", disable_ui=true) # Start of operation/undo section
-  
     @project = project
     
     # first; create objects 
@@ -61,66 +59,15 @@ class PlanarFromFaces
     # second; create geometry for the created objects, to make sure all connections are known.
     @project.bt_entities_set_geometry(@a_planars)
     @a_planars.each do |planar|
-    #  planar.set_geometry #planar class still missing this function!
-    #  
+
       # add the geometry group to the selection
       @model.selection.add planar.geometry
     end
-    
-    
     @model.commit_operation # End of operation/undo section
-    @model.active_view.refresh # Refresh model
+    @model.active_view.refresh
     
+    # activate select tool
+    Sketchup.send_action(21022)
     return @a_planars
-  end
-  
-  # For this tool, allow vcb text entry while the tool is active.
-  def enableVCB?
-    return true
-  end
-  
-  def onUserText(text, view)
-    require 'bim-tools/tools/bt_entities_update.rb'
-    begin
-      width = text.to_l.to_mm
-    rescue
-      # Error parsing the text
-      UI.beep
-      # puts "Cannot convert #{text} to a Length"
-      width = nil
-      Sketchup::set_status_text "", SB_VCB_VALUE
-    end
-    return if !width
-  
-    @a_planars.each do |planar|
-    
-      # set the object's width to the user input for "thickness"
-      planar.width= width
-      
-      # set the object's offset to half the width(based on a centered alignment)
-      planar.offset= width/2
-      
-      # update the BIM-Tools elements based on the user input
-      h_Properties = Hash.new
-      h_Properties["width"] = planar.width.to_mm
-      h_Properties["offset"] = planar.offset.to_mm
-      bt_entities_update(@project, @a_planars, h_Properties)
-    end
-  end
-  
-  # on mouse click, cancel current tool and imitate select-tool.
-  def onLButtonDown(flags, x, y, view)
-    @model.select_tool nil
-    view = @model.active_view
-    ph = view.pick_helper
-    ph.do_pick x,y
-    @model.selection.clear
-    @model.selection.add ph.all_picked
-  end
-  def onMButtonDown(flags, x, y, view)
-    @model.select_tool nil
-  end
-  def onRButtonDown(flags, x, y, view)
-    @model.select_tool nil
   end
 end
