@@ -52,10 +52,12 @@ class ClsEntityInfo < ClsDialogSection
   def html_content
     sel = @dialog.selection
     if sel.btEntities?.length == 0
+      @status = false
       return "
 <h2>No BIM-Tools entities selected</h2>
       "
     else
+      @status = true
       return "
 <h2>Selected entity</h2>
 <form id='EntityInfo' name='EntityInfo' action='skp:EntityInfo@true'>

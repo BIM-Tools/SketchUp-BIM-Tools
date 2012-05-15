@@ -396,6 +396,8 @@ class ClsPlanarElement < ClsBuildingElement
     set_planes #???
   end
   
+
+  
   # Array needed to find intersections with planes of connecting elements
   def planes
     return @aPlanesHor
@@ -467,6 +469,7 @@ class ClsPlanarElement < ClsBuildingElement
   end
   
   def properties=(h_Properties)
+  
     @width = h_Properties["width"].to_f.mm
     @offset = h_Properties["offset"].to_f.mm
     @element_type = h_Properties["element_type"]
@@ -474,6 +477,8 @@ class ClsPlanarElement < ClsBuildingElement
     @description = h_Properties["description"]
     set_planes
     #update_geometry
+    
+    #puts @height
   end
   
   #same as previous, but without mm conversion
