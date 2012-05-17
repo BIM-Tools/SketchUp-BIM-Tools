@@ -57,7 +57,7 @@ class ClsBtSelection
         common_keys.each do |key|
           prop_value = nil #watch out! properties could also be nil!
           btEntities?.each do |bt_entity|
-            if prop_value == nil
+            if prop_value.nil?
               prop_value = bt_entity.properties_fixed[key]
             elsif bt_entity.properties_fixed[key] != prop_value
               prop_value = "..."
