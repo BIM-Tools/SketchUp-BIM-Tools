@@ -153,13 +153,15 @@ class ClsEntityInfo < ClsDialogSection
   def html_properties_fixed
     sel = @dialog.selection
     html = ""
-    if sel.common_properties != nil
+    unless sel.common_properties.nil?
       sel.common_properties.each do |key, value|
-        html = html + "
+        unless value.nil?
+          html = html + "
   <br />
   <label for='" + key + "'>" + key + ":</label>
-  <input name='" + key + "' type='text' id='" + key + "' value='" + value + "' disabled='disabled' />
-        "
+  <input name='" + key + "' type='text' id='" + key + "' value='" + value.to_s + "' disabled='disabled' />
+          "
+        end
       end
     end
     return html

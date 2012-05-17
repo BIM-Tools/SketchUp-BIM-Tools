@@ -1,6 +1,6 @@
 #       bim-tools.rb
 #       
-#       Copyright (C) 2011 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -15,8 +15,11 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# roadmap:
+# roadmap 0.11:
 # export to IFC
+
+# roadmap 0.12:
+# columns
 
 # Changelog:
 # 120515 re-implemented walls from edges function

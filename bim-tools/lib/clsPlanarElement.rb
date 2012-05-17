@@ -25,18 +25,20 @@ class ClsPlanarElement < ClsBuildingElement
     @source = face
     @deleted = false
     @source_hidden = @project.visible_geometry? # for function in ClsBuildingElement
-    @geometry = nil
-    @aPlanesHor = nil
-    @element_type = nil
-    @name = ""
-    @description = ""
-    @guid = ""
-    if width == nil
+    @geometry
+    @aPlanesHor
+    @element_type
+    @name
+    @description
+    @guid
+    @length
+    @height
+    if width.nil?
       @width = 300.mm
     else
       @width = width
     end
-    if offset == nil
+    if offset.nil?
       @offset = 150.mm
     else
       @offset = offset
@@ -373,7 +375,12 @@ class ClsPlanarElement < ClsBuildingElement
   def possible_types
     return Array["Wall", "Floor", "Roof"]
   end
-  
+  def length?
+    return @length
+  end  
+  def height?
+    return @height
+  end
   def width
     return @width
   end
@@ -384,6 +391,8 @@ class ClsPlanarElement < ClsBuildingElement
   def update_geometry
     set_planes
     set_geometry
+    define_length
+    define_height
   end
   def geometry=(geometry)
     @geometry = geometry
@@ -396,7 +405,97 @@ class ClsPlanarElement < ClsBuildingElement
     set_planes #???
   end
   
+  # calculate the planar´s "length" == size in x-direction
+  def define_length
+    min = nil
+    max = nil
+    t = @geometry.transformation.inverse
+    @source.vertices.each do |vertex|
+      p = vertex.position.transform t
+      if min.nil?
+        min = p.x
+      elsif p.x < min
+        min = p.x
+      end
+      if max.nil?
+        max = p.x
+      elsif p.x > max
+        max = p.x
+      end
+    end
+    tot = max - min
+    @length = tot.to_mm.mm
+  end
+  
+  # calculate the planar´s "height"  == size in y-direction
+  def define_height
+    min = nil
+    max = nil
+    t = @geometry.transformation.inverse
+    @source.vertices.each do |vertex|
+      p = vertex.position.transform t
+      if min.nil?
+        min = p.y
+      elsif p.y < min
+        min = p.y
+      end
+      if max.nil?
+        max = p.y
+      elsif p.y > max
+        max = p.y
+      end
+    end
+    tot = max - min
+    @height = tot.to_mm.mm
+  end
+  
+  # scale @source to match a new height and length
+  def scale_source(new_length, new_height)
+    #puts "new length: " + new_length.to_s
+    #puts "old length: " + length?.to_s
+    #puts "new height: " + new_height.to_s
+    #puts "old height: " + height?.to_s
+    x_scale = new_length / length?
+    y_scale = new_height / height?
+    z_scale = 1
+    puts "length scale: " + x_scale.to_s
+    puts "height scale: " + y_scale.to_s
+    
+    model = Sketchup.active_model
+    entities = model.active_entities
 
+    t = @geometry.transformation
+    ti = t.inverse
+    
+    ts = Geom::Transformation.scaling(x_scale, y_scale, z_scale)
+    
+    a_Vertices = Array.new
+    a_Vectors = Array.new
+    
+    @source.vertices.each do |vertex|
+      po = vertex.position
+      pn = Geom::Point3d.new(po.x, po.y, po.z)
+      
+      pn.transform! ti
+      pn.transform! ts
+      pn.transform! t
+    
+      vx = pn.x - po.x
+      vy = pn.y - po.y
+      vz = pn.z - po.z
+      
+      v = Geom::Vector3d.new vx,vy,vz
+      
+      a_Vertices << vertex
+      a_Vectors << v
+      
+    end
+    
+    entities.transform_by_vectors a_Vertices, a_Vectors
+    
+    #why is @source deleted??? is moving vertices the same as scaling face???
+    @project.source_recovery
+  end
   
   # Array needed to find intersections with planes of connecting elements
   def planes
@@ -428,6 +527,8 @@ class ClsPlanarElement < ClsBuildingElement
   # met deze functie kun je een hash ophalen met alle informatieve eigenschappen
   def properties_fixed
     h_Properties = Hash.new
+    h_Properties["length"] = length?
+    h_Properties["height"] = height?
     if @geometry.volume > 0
       h_Properties["volume"] = (@geometry.volume* (25.4 **3)).round.to_s + " Millimeters ³"
     end
@@ -461,6 +562,8 @@ class ClsPlanarElement < ClsBuildingElement
     h_Properties = Hash.new
     h_Properties["width"] = @width
     h_Properties["offset"] = @offset
+    h_Properties["length"] = length?
+    h_Properties["height"] = height?
     h_Properties["element_type"] = a_types
     # h_Properties["layer"] = a_layers
     h_Properties["name"] = @name
@@ -472,6 +575,21 @@ class ClsPlanarElement < ClsBuildingElement
   
     @width = h_Properties["width"].to_f.mm
     @offset = h_Properties["offset"].to_f.mm
+    length_new = h_Properties["length"].to_f.mm
+    height_new = h_Properties["height"].to_f.mm
+    if length_new.nil?
+      length_new = length?
+    end
+    if height_new.nil?
+      height_new = height?
+    end
+    
+    # check if length or height has changed
+    if length_new != length? || height_new != height?
+    
+      # scale_source to match new length
+      scale_source(h_Properties["length"].to_f.mm, h_Properties["height"].to_f.mm)
+    end
     @element_type = h_Properties["element_type"]
     @name = h_Properties["name"]
     @description = h_Properties["description"]
