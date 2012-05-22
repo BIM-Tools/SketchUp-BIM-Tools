@@ -73,11 +73,13 @@ class ClsBtProject
     # find all connecting bt_entities and add to array
     a_bt_entities.each do |bt_entity|
       face = bt_entity.source
-      face.edges.each do |edge|
-        edge.faces.each do |face|
-          bt_entity = @lib.source_to_bt_entity(@project, face)
-          unless bt_entity.nil?
-            to_update << bt_entity
+      unless face.deleted?
+        face.edges.each do |edge|
+          edge.faces.each do |face|
+            bt_entity = @lib.source_to_bt_entity(@project, face)
+            unless bt_entity.nil?
+              to_update << bt_entity
+            end
           end
         end
       end

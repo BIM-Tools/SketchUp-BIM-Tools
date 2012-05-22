@@ -39,11 +39,15 @@ class ClsBuildingElement
     @deleted = true
     unless @source.deleted?
       source.hidden= false
-      #@source.erase!
+      
+      # remove all bt properties from face
+      @source.attribute_dictionaries.delete 'ifc'
     end
     unless @geometry.deleted?
       @geometry.erase!
     end
+    
+    # remobe bt_entity from library
     @project.library.entities.delete(self)
   end
   
@@ -58,6 +62,7 @@ class ClsBuildingElement
     end
   end
   def source
+    #check_source
     return @source
   end
   def source=(source)
@@ -107,6 +112,20 @@ class ClsBuildingElement
       return true
     else
       return false
+    end
+  end
+  
+  # checks if the source entity is valid, and if not searches for new source entity
+  def check_source
+    if @source.deleted?
+      @project.source_recovery
+    end
+  end
+    
+  # checks if the geometry group is valid, and if not creates new geometry
+  def check_geometry
+    if @geometry.deleted?
+      set_geometry
     end
   end
   
