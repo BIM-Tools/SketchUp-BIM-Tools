@@ -62,7 +62,7 @@ class ClsPlanarElement < ClsBuildingElement
   # create the geometry for the planar element
   def set_geometry
     entities = Sketchup.active_model.active_entities
-    
+    self.check_source
     # do not update geometry when the planar element is in the process of beeing deleted(marked for deletion)
     if @deleted == false
       if @geometry.nil?
@@ -84,9 +84,59 @@ class ClsPlanarElement < ClsBuildingElement
           group.entities.clear!
         end
       end
-      origin = @source.vertices[0].position
+      
+      #find origin
+      
+      tmp_origin = @source.vertices[0].position
       zaxis = @source.normal
-      t_base_plane = Geom::Transformation.new(origin, zaxis)
+      t_base_plane = Geom::Transformation.new(tmp_origin, zaxis)
+      
+      ti = t_base_plane.inverse
+       
+      a_Vertices = Array.new
+      a_Vectors = Array.new
+      x = nil
+      y = nil
+      z = nil
+      
+      @source.vertices.each do |vertex|
+        po = vertex.position
+        pn = Geom::Point3d.new(po.x, po.y, po.z)
+        
+        pn.transform! ti
+        
+        #find lowest value for x, y and z
+        if x.nil?
+          x = pn.x
+        else
+          if pn.x < x
+            x = pn.x
+          end
+        end
+        if y.nil?
+          y = pn.y
+        else
+          if pn.y < y
+            y = pn.y
+          end
+        end
+        if z.nil?
+          z = pn.z
+        else
+          if pn.z < z
+            z = pn.z
+          end
+        end
+      end
+      
+      point = Geom::Point3d.new(x, y, z)
+      
+      translation = Geom::Transformation.new point
+      
+      #origin.transform! t_base_plane
+      
+      t_base_plane = t_base_plane * translation
+      
       group.transformation = t_base_plane
       
       # array that holds the vertical-planes-array for every loop
@@ -244,10 +294,8 @@ class ClsPlanarElement < ClsBuildingElement
             aFacePtsBottom << pts[1]
           end
           #end
-          
-          #pts.uniq!
+
           #door het extra tussen gevoegde vlak ontstaan dubbele punten?
-          #puts pts
           
           # when a face has duplicate points it cannot be created, temporary solution: skip face
           begin
@@ -376,9 +424,15 @@ class ClsPlanarElement < ClsBuildingElement
     return Array["Wall", "Floor", "Roof"]
   end
   def length?
+  
+    # define_length here might cause unneccesary overhead
+    define_length
     return @length
   end  
   def height?
+  
+    # define_height here might cause unneccesary overhead
+    define_height
     return @height
   end
   def width
@@ -407,59 +461,78 @@ class ClsPlanarElement < ClsBuildingElement
   
   # calculate the planar´s "length" == size in x-direction
   def define_length
+    length = nil
     min = nil
     max = nil
-    t = @geometry.transformation.inverse
-    @source.vertices.each do |vertex|
-      p = vertex.position.transform t
-      if min.nil?
-        min = p.x
-      elsif p.x < min
-        min = p.x
+    
+    #check if geometry object is valid, how best?
+    check_source
+    #check_geometry
+    unless @geometry.deleted?
+      t = @geometry.transformation.inverse
+      @source.vertices.each do |vertex|
+        p = vertex.position.transform t
+        if min.nil?
+          min = p.x
+        elsif p.x < min
+          min = p.x
+        end
+        if max.nil?
+          max = p.x
+        elsif p.x > max
+          max = p.x
+        end
       end
-      if max.nil?
-        max = p.x
-      elsif p.x > max
-        max = p.x
-      end
+      tot = max - min
+      length = tot.to_mm.mm
     end
-    tot = max - min
-    @length = tot.to_mm.mm
+    return @length = length
   end
   
   # calculate the planar´s "height"  == size in y-direction
   def define_height
+    height = nil
     min = nil
     max = nil
-    t = @geometry.transformation.inverse
-    @source.vertices.each do |vertex|
-      p = vertex.position.transform t
-      if min.nil?
-        min = p.y
-      elsif p.y < min
-        min = p.y
+    
+    #check if geometry object is valid, how best?
+    check_source
+    #check_geometry
+    unless @geometry.deleted?
+      t = @geometry.transformation.inverse
+      check_source
+      @source.vertices.each do |vertex|
+        p = vertex.position.transform t
+        if min.nil?
+          min = p.y
+        elsif p.y < min
+          min = p.y
+        end
+        if max.nil?
+          max = p.y
+        elsif p.y > max
+          max = p.y
+        end
       end
-      if max.nil?
-        max = p.y
-      elsif p.y > max
-        max = p.y
-      end
+      tot = max - min
+      height = tot.to_mm.mm
     end
-    tot = max - min
-    @height = tot.to_mm.mm
+    return @height = height
   end
   
   # scale @source to match a new height and length
   def scale_source(new_length, new_height)
-    #puts "new length: " + new_length.to_s
-    #puts "old length: " + length?.to_s
-    #puts "new height: " + new_height.to_s
-    #puts "old height: " + height?.to_s
-    x_scale = new_length / length?
-    y_scale = new_height / height?
+    if new_length.nil? || new_length == 0
+      x_scale = 1
+    else
+      x_scale = new_length / length?
+    end
+    if new_height.nil? || new_height == 0
+      y_scale = 1
+    else
+      y_scale = new_height / height?
+    end
     z_scale = 1
-    puts "length scale: " + x_scale.to_s
-    puts "height scale: " + y_scale.to_s
     
     model = Sketchup.active_model
     entities = model.active_entities
@@ -527,8 +600,6 @@ class ClsPlanarElement < ClsBuildingElement
   # met deze functie kun je een hash ophalen met alle informatieve eigenschappen
   def properties_fixed
     h_Properties = Hash.new
-    h_Properties["length"] = length?
-    h_Properties["height"] = height?
     if @geometry.volume > 0
       h_Properties["volume"] = (@geometry.volume* (25.4 **3)).round.to_s + " Millimeters ³"
     end
@@ -577,15 +648,17 @@ class ClsPlanarElement < ClsBuildingElement
     @offset = h_Properties["offset"].to_f.mm
     length_new = h_Properties["length"].to_f.mm
     height_new = h_Properties["height"].to_f.mm
-    if length_new.nil?
-      length_new = length?
-    end
-    if height_new.nil?
-      height_new = height?
-    end
+    #if length_new.nil?# || length_new == 0
+    #  length_new = length?
+    #end
+    #if height_new.nil?
+    #  height_new = height?
+    #end
+    
+    unless length_new.nil? && height_new.nil?
     
     # check if length or height has changed
-    if length_new != length? || height_new != height?
+    #if length_new != length? || height_new != height?
     
       # scale_source to match new length
       scale_source(h_Properties["length"].to_f.mm, h_Properties["height"].to_f.mm)
@@ -595,8 +668,6 @@ class ClsPlanarElement < ClsBuildingElement
     @description = h_Properties["description"]
     set_planes
     #update_geometry
-    
-    #puts @height
   end
   
   #same as previous, but without mm conversion
@@ -628,8 +699,10 @@ class ClsPlanarElement < ClsBuildingElement
     unless @geometry.nil?
       @geometry.set_attribute "ifc", "guid", guid?
       @geometry.set_attribute "ifc", "type", element_type?
-      @geometry.set_attribute "ifc", "offset", @offset.to_s #needs to be in planarelement class
+      @geometry.set_attribute "ifc", "length", length?.to_s
+      @geometry.set_attribute "ifc", "height", height?.to_s
       @geometry.set_attribute "ifc", "width", @width.to_s #needs to be in planarelement class
+      @geometry.set_attribute "ifc", "offset", @offset.to_s #needs to be in planarelement class
       @geometry.set_attribute "ifc", "description", description?.to_s
       @geometry.set_attribute "ifc", "name", name?.to_s
     end

@@ -22,6 +22,9 @@
 # columns
 
 # Changelog:
+# 120522 fixed planar geometry origin
+# 120522 fixed bug in delete properties, attribute library also gets deleted
+# 120517 added option to change planar length and height
 # 120515 re-implemented walls from edges function
 # 120509 added materials to planars
 # 120504 added remove BIM properties button
@@ -42,6 +45,6 @@ require 'sketchup.rb'
 require 'extensions.rb'
 
 bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-bimtools.version = '0.10.5'
+bimtools.version = '0.10.6'
 bimtools.description = "Tools to create building parts and export these to IFC."
 Sketchup.register_extension bimtools, true
