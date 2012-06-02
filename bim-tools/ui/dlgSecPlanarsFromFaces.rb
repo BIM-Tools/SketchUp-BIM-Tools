@@ -1,4 +1,4 @@
-#       clsWallsFromEdges.rb
+#       dlgSecPLanarsFromFaces.rb
 #       
 #       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
 #       
@@ -17,14 +17,14 @@
 
 require 'bim-tools/ui/clsDialogSection.rb'
 
-class ClsWallsFromEdges < ClsDialogSection
+class ClsDlgSecPlanarsFromFaces < ClsDialogSection
   def initialize(dialog)
     @dialog = dialog
     @project = dialog.project
     @status = true
-    @name = "WallsFromEdges"
-    @title = "Walls from edges"
-    @buttontext = "Create walls from edges"
+    @name = "PlanarsFromFaces"
+    @title = "Thick faces"
+    @buttontext = "Create thick faces"
     @width = "-"
     @offset = "-"
     @volume = "-"
@@ -41,22 +41,32 @@ class ClsWallsFromEdges < ClsDialogSection
       offset = 150
       selection = Sketchup.active_model.selection
       if selection.length > 0
-        require "bim-tools/tools/walls_from_edges.rb"
+        require "bim-tools/tools/planar_from_faces.rb"
 
         #split string into separate values
         a_form_data = split_string(params)
         
         # validate data from html form
         h_Properties = extract_data(a_form_data)
+        #h_Properties = nil
 
-
-        a_edges = Array.new
-        selection.each do |entity|
-          if entity.typename == "Edge"
-            a_edges << entity
-          end
-        end
-        bt_entities = WallsFromEdges.new(@project, a_edges, h_Properties)
+        #a_sources = Array.new
+        #selection.each do |entity|
+        #  if entity.typename == "Face"
+        #    a_sources << entity
+        #  end
+        #end
+        
+        
+        planar_from_faces = PlanarFromFaces.new(@project, selection, h_Properties)
+        
+        #hmmmm, should one tool need to activate an other????
+        bt_entities = planar_from_faces.activate
+        
+        #Sketchup.active_model.select_tool planar_from_faces
+        
+        #        planar = ClsPlanarElement.new(@project, source)
+        #walls_from_edges = WallsFromEdges.new(@project, a_sources)#, h_Properties)
       end
       self.update(bt_entities)
     }
@@ -71,7 +81,7 @@ class ClsWallsFromEdges < ClsDialogSection
   def html_content
     edges = false
     Sketchup.active_model.selection.each do |entity|
-      if entity.typename == "Edge"
+      if entity.typename == "Face"
         edges = true
         break
       end
@@ -85,7 +95,7 @@ class ClsWallsFromEdges < ClsDialogSection
     else
       @status = true
       return "
-<form id='" + @name + "' name='" + @name + "' action='skp:" + @name + "@true'>
+<form id='" + @title + "' name='" + @name + "' action='skp:" + @name + "@true'>
 " + html_properties_editable + "
 <hr />" + html_properties_fixed + "
 <input type='submit' name='submit' id='submit' value='" + @buttontext + "' />
@@ -97,9 +107,7 @@ class ClsWallsFromEdges < ClsDialogSection
   def html_properties_editable
     sel = @dialog.selection
     html = "
-          <label for='height'>Height:</label>
-          <input name='height' type='text' id='height' value='2400' />
-          <label for='width'>Width:</label>
+          <label for='width'>Thickness:</label>
           <input name='width' type='text' id='width' value='300' />
           <label for='offset'>Offset:</label>
           <input name='offset' type='text' id='offset' value='150' />

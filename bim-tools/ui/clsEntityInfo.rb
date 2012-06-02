@@ -23,6 +23,8 @@ class ClsEntityInfo < ClsDialogSection
     @project = dialog.project
     @status = true
     @name = "EntityInfo"
+    @title = "Entity Info"
+    @buttontext = "Update selected entities"
     @width = "-"
     @offset = "-"
     @volume = "-"
@@ -44,9 +46,10 @@ class ClsEntityInfo < ClsDialogSection
       # validate data from html form
       h_Properties = extract_data(a_form_data)
       
-      sel = @dialog.selection.btEntities?
+      bt_entities = @dialog.selection.btEntities?
 
-      bt_entities_update(@project, sel, h_Properties)
+      bt_entities_update(@project, bt_entities, h_Properties)
+      self.update(bt_entities)
     }
   end
   def html_content
@@ -59,11 +62,10 @@ class ClsEntityInfo < ClsDialogSection
     else
       @status = true
       return "
-<h2>Selected entity</h2>
-<form id='EntityInfo' name='EntityInfo' action='skp:EntityInfo@true'>
+<form id='" + @name + "' name='" + @name + "' action='skp:" + @name + "@true'>
   " + html_properties_editable + "
   <hr />" + html_properties_fixed + "
-  <input type='submit' name='submit' id='submit' value='Update selected entities' />
+  <input type='submit' name='submit' id='submit' value='" + @buttontext + "' />
 </form>
       "
     end

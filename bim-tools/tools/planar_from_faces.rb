@@ -21,15 +21,35 @@
 
 #module Bt_create
 class PlanarFromFaces
-  def initialize(project, a_sources)
+  def initialize(project, a_sources, h_properties=nil)
     @project = project
     @model = Sketchup.active_model
     @a_sources = a_sources
+    if h_properties.nil?
+      @h_properties = Hash.new
+    else
+      @h_properties = h_properties
+    end
+    
+    # set width value
+    if @h_properties["width"]
+      @width = @h_properties["width"].mm
+    else
+      @width = nil
+    end   
+     
+    # set offset value
+    if @h_properties["offset"]
+      @offset = @h_properties["offset"].mm
+    else
+      @offset = nil
+    end
+    
     @a_planars = Array.new
   end
   
   def activate
-    planar_from_faces(@project, @a_sources)
+    return planar_from_faces(@project, @a_sources)
   end
 
   def planar_from_faces(project, a_sources)
@@ -48,7 +68,7 @@ class PlanarFromFaces
       if source.typename == "Face"
         # check if a BIM-Tools entity already exists for the source face
         if @project.library.source_to_bt_entity(@project, source).nil?
-          @a_planars << ClsPlanarElement.new(@project, source)
+          @a_planars << ClsPlanarElement.new(@project, source, @width, @offset)
         end
       end
     end
