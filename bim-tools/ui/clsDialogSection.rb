@@ -20,20 +20,24 @@ class ClsDialogSection
     @dialog = dialog
     @status = true
     @name = "default"
+    @title = "default"
     @html_content = ""
   end
   def html
     if @status == true
       output = "
-<a href='skp:min_max@" + @name + "=false'><h1 style='background-image: url(" + @dialog.imagepath + "minimize.png)'>" + @name + "</h1></a><hr />
+<a href='skp:min_max@" + @name + "=false'><h1 style='background-image: url(" + @dialog.imagepath + "minimize.png)'><img src='" + @dialog.imagepath + @name + "_small.png' />" + @title + "</h1></a><hr />
       "
       output = output + @html_content
       return output
     else
       return"
-<a href='skp:min_max@" + @name + "=true'><h1 style='background-image: url(" + @dialog.imagepath + "maximize.png)'>" + @name + "</h1></a><hr />
+<a href='skp:min_max@" + @name + "=true'><h1 style='background-image: url(" + @dialog.imagepath + "maximize.png)'><img src='" + @dialog.imagepath + @name + "_small.png' />" + @title + "</h1></a><hr />
       "
     end
+  end
+  def name?
+    return @name
   end
   def minimize
     @status = false

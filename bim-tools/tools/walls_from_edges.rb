@@ -30,11 +30,12 @@ class WallsFromEdges
     
     a_faces = create_faces(a_edges)
 
-    planar_from_faces = planar_from_faces(@project, a_faces)
-    @model.select_tool planar_from_faces
+    planars = planar_from_faces(@project, a_faces)
+    #@model.select_tool planar_from_faces
     
     @model.commit_operation # End of operation/undo section
     @model.active_view.refresh # Refresh model
+    return planars
     
   end
   def create_faces(a_edges)

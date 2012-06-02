@@ -63,14 +63,14 @@ class BtToolbar
     # cmd_bimtools.menu_text = "Test"
     bt_toolbar = bt_toolbar.add_item cmd_bimtools
 
-    cmd_planar_from_selection.small_icon = "../images/icon_create_from_faces_small.png"
-    cmd_planar_from_selection.large_icon = "../images/icon_create_from_faces_large.png"
+    cmd_planar_from_selection.small_icon = "../images/PlanarsFromFaces_small.png"
+    cmd_planar_from_selection.large_icon = "../images/PlanarsFromFaces_large.png"
     cmd_planar_from_selection.tooltip = "Creates building elements from selected faces"
     cmd_planar_from_selection.status_bar_text = "Creates building elements from selected faces"
     bt_toolbar = bt_toolbar.add_item cmd_planar_from_selection
     
-    cmd_toggle_geometry.small_icon = "../images/icon_toggle_geometry_small.png"
-    cmd_toggle_geometry.large_icon = "../images/icon_toggle_geometry_large.png"
+    cmd_toggle_geometry.small_icon = "../images/ToggleGeometry_small.png"
+    cmd_toggle_geometry.large_icon = "../images/ToggleGeometry_large.png"
     cmd_toggle_geometry.tooltip = "Toggle between sources and geometry"
     cmd_toggle_geometry.status_bar_text = "Toggle between sources and geometry"
     bt_toolbar = bt_toolbar.add_item cmd_toggle_geometry

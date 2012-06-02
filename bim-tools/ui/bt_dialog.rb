@@ -47,19 +47,29 @@ class Bt_dialog
     min_max
     
     # define sections
+    
     require 'bim-tools/ui/clsEntityInfo.rb'
+    section = ClsEntityInfo.new(self)
+    name = section.name?
+    @h_sections[name] = section
+    
     require 'bim-tools/ui/clsWallsFromEdges.rb'
-    entityInfo = ClsEntityInfo.new(self)
-    wallsfromedges = ClsWallsFromEdges.new(self)
-    @h_sections["EntityInfo"] = entityInfo
-    @h_sections["WallsFromEdges"] = wallsfromedges
+    section = ClsWallsFromEdges.new(self)
+    name = section.name?
+    @h_sections[name] = section
+    
+    require 'bim-tools/ui/dlgSecPlanarsFromFaces.rb'
+    section = ClsDlgSecPlanarsFromFaces.new(self)
+    name = section.name?
+    @h_sections[name] = section
+    
     #@h_sections["ProjectData"] = ClsProjectData.new
     
     @dialog.set_html( html )
     self.show
     
     # Attach the observer.
-    Sketchup.active_model.selection.add_observer(MySelectionObserver.new(@project, self, entityInfo, wallsfromedges))
+    Sketchup.active_model.selection.add_observer(MySelectionObserver.new(@project, self, @h_sections))
 		
   end
   def show
@@ -130,11 +140,12 @@ class Bt_dialog
     return @project
   end  # This is an example of an observer that watches the selection for changes.
   class MySelectionObserver < Sketchup::SelectionObserver
-    def initialize(project, bt_dialog, entityInfo, wallsfromedges)
+    def initialize(project, bt_dialog, h_sections)
 			@project = project
 			@bt_dialog = bt_dialog
-			@entityInfo = entityInfo
-      @wallsfromedges = wallsfromedges
+			#@entityInfo = entityInfo
+      #@wallsfromedges = wallsfromedges
+      @h_sections = h_sections
 		end
 		def onSelectionBulkChange(selection)
 			# open menu entity_info als de selectie wijzigt
@@ -144,13 +155,24 @@ class Bt_dialog
 			
 			#js_command = 'entity_info_width("' + width.to_s + '")'
 			#@dialog.execute_script(js_command)
-			@entityInfo.update(selection)
-			@wallsfromedges.update(selection)
+			#@entityInfo.update(selection)
+			#@wallsfromedges.update(selection)
+      
+      @h_sections.each_value do |section|
+        section.update(selection)
+      end
+      
 			#@bt_dialog.webdialog.set_html( @bt_dialog.html )
 		end
 		def onSelectionCleared(selection)
-			@entityInfo.update(selection)
-			@wallsfromedges.update(selection)
+			#@entityInfo.update(selection)
+			#@wallsfromedges.update(selection)
+      
+            
+      @h_sections.each_value do |section|
+        section.update(selection)
+      end
+      
 			#@bt_dialog.webdialog.set_html( @bt_dialog.html )
 		end
 	end
