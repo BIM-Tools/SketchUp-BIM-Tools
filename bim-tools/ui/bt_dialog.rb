@@ -37,6 +37,8 @@ class Bt_dialog
     @bt_lib = bt_lib
     @javascript = ""
     
+    callback
+    
     # create BIM-Tools selection object
     require 'bim-tools/lib/clsBtSelection.rb'
     @selection = ClsBtSelection.new(@project, self)
@@ -79,6 +81,19 @@ class Bt_dialog
   def refresh
     @dialog.set_html( html )
   end
+  def callback
+    self.webdialog.add_action_callback("cmd_bimtools") {|dialog, params|
+      self.close
+    }
+    self.webdialog.add_action_callback("cmd_toggle_geometry") {|dialog, params|
+      @project.toggle_geometry()
+    }
+    self.webdialog.add_action_callback("cmd_clear") {|dialog, params|
+      require "bim-tools/tools/clear_properties.rb"
+      selection = Sketchup.active_model.selection
+      ClearProperties.new(@project, selection)
+    }
+  end
   def html
     content = ""
     @h_sections.each_value do |section|
@@ -97,6 +112,12 @@ class Bt_dialog
     <style type='text/css'> h1 {background-image: url(" + @imagepath + "minimize.png)}</style>
     </head>
     <body>
+    <ul>
+    <li><a href='skp:cmd_bimtools@true'><img src='" + self.imagepath + "bimtools_large.png' /></a></li>
+    <li><a href='skp:cmd_toggle_geometry@true'><img src='" + self.imagepath + "ToggleGeometry_large.png' /></a></li>
+    <li><a href='skp:cmd_clear@true'><img src='" + self.imagepath + "clear_large.png' /></a></li>
+    </ul>
+    <hr />
     "
   end
   def html_bottom
