@@ -17,11 +17,16 @@
 
 # roadmap 0.11:
 # export to IFC
+# fix side-faces normal direction in openings
 
 # roadmap 0.12:
 # columns
 
 # Changelog:
+# 120603 Added top menu to webdialog
+# 120602 Added dialog section for thick faces
+# 120602 Added dialog thumbnails
+# 120602 Streamlined dialog ui
 # 120522 fixed planar geometry origin
 # 120522 fixed bug in delete properties, attribute library also gets deleted
 # 120517 added option to change planar length and height

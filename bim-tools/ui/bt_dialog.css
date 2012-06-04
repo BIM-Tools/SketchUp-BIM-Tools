@@ -5,7 +5,6 @@ html {
 	background-color: #f0f0f0;
 }
 body {
-	width: 198px;
 	margin: 1px;
 	padding: 0;
 }
@@ -13,12 +12,10 @@ h1 {
 	font-size: 1em;
 	font-weight: bold;
 	vertical-align:middle;
-	width: 198px;
-	height: 16px;
+	height: 24px;
 	margin: 0;
 	padding: 0;
 	margin-left: 6px;
-	padding-top: 6px;
 	background-repeat: no-repeat;
 	background-position: right top;
 }
@@ -33,6 +30,9 @@ p {
 	height: 1em;
 }
 hr {
+	clear:both;
+	margin: 0;
+	padding: 0;
 	height: 0;
 	border: 0;
 	border-bottom: 1px solid #a0a0a0;
@@ -40,6 +40,7 @@ hr {
 img {
 	vertical-align:middle;
 	margin-right: 6px;
+	border: 0;
 }
 a {
 	color: #000000;
@@ -77,4 +78,15 @@ form #submit {
 	font-size: 1em;
 	height: 22px;
 	width: 100%;
+}
+ul {
+	width: 100%;
+	margin: 0;
+	padding: 4px;
+	list-style-type: none;
+}
+li {
+	margin: 0;
+	padding: 0;
+	float: left;
 }
