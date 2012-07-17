@@ -28,9 +28,9 @@ class ClearProperties
     
     entities.each do |entity|
       bt_entity = nil
-      if entity.typename == "Group"
+      if entity.is_a?(Sketchup::Group)
         bt_entity = @project.library.geometry_to_bt_entity(@project, entity)
-      elsif entity.typename == "Face"
+      elsif entity.is_a?(Sketchup::Face)
         bt_entity = @project.library.source_to_bt_entity(@project, entity)
       end
       

@@ -55,7 +55,6 @@ class BtToolbar
       ClearProperties.new(@project, selection)
     }
 
-
     cmd_bimtools.small_icon = "../images/bimtools_small.png"
     cmd_bimtools.large_icon = "../images/bimtools_large.png"
     cmd_bimtools.tooltip = "Open BIM-Tools window"
@@ -80,7 +79,7 @@ class BtToolbar
     cmd_clear.tooltip = "Remove BIM properties"
     cmd_clear.status_bar_text = "Remove BIM properties from selection"
     bt_toolbar = bt_toolbar.add_item cmd_clear
-    
+
     bt_toolbar.show
   end
 end

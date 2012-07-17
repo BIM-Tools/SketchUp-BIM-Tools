@@ -37,10 +37,10 @@ class ClsFindIfcEntities
   # recursive loop that fires check_ifc for every element and subelement
   def find_ifc_loop(entities)
     entities.each do |ent|
-      if ent.typename=="Group"
+      if ent.is_a?(Sketchup::Group)
         check_ifc(ent)
         find_ifc_loop(ent.entities)
-      elsif ent.typename=="ComponentInstance"
+      elsif ent.is_a?(Sketchup::ComponentInstance)
         check_ifc(ent)
         find_ifc_loop(ent.definition.entities)
       else
@@ -59,7 +59,7 @@ class ClsFindIfcEntities
       #  @h_guid_list[guid] = Array.new
       #  @h_guid_list[guid] << ent
       #end
-      if ent.typename == "Group"
+      if ent.is_a?(Sketchup::Group)
         if @lib.geometry_to_bt_entity(@project, ent).nil?
           ### add_bt_entity(ent)
           if @h_guid_list[guid]

@@ -16,6 +16,7 @@ h1 {
 	margin: 0;
 	padding: 0;
 	margin-left: 6px;
+	margin-bottom: 0.2em;
 	background-repeat: no-repeat;
 	background-position: right top;
 }
@@ -24,7 +25,8 @@ h2 {
 	font-weight: bold;
 	margin: 0;
 	padding: 0;
-	padding-left: 12px;
+	margin-left: 5%;
+	margin-bottom: 0.1em;
 }
 p {
 	height: 1em;
@@ -46,30 +48,27 @@ a {
 	color: #000000;
 	text-decoration: none;
 }
-span {
-	display: block;
-	float: left;
-	width: 70px;
-	height: 1em;
-	margin-right: 10px;
-}
 form {
-	padding-left: 12px;
+	margin: 0;
+	padding: 0;
 }
 label {
 	display: block;
 	float: left;
-	width: 68px;
+	width: 37%;
 	height: 1em;
+	margin: 0;
+	padding: 0;
+	margin-left: 5%;
 }
 input {
 	font-size: 1em;
 	height: 1em;
-	width: 98px;
+	width: 50%;
 }
 select {
 	font-size: 1em;
-	width: 98px;
+	width: 50%;
 	height: 20px;
 }
 form hr {
@@ -77,7 +76,8 @@ form hr {
 form #submit {
 	font-size: 1em;
 	height: 22px;
-	width: 100%;
+	width: 90%;
+	margin: 0.4em 5% 0.4em 5%;
 }
 ul {
 	width: 100%;

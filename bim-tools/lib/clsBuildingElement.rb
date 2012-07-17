@@ -152,8 +152,7 @@ class ClsBuildingElement
   end
 
   def set_guid
-    guid = '';22.times{|i|guid<<'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$'[rand(64)]}
-    @guid = guid
+    @guid = @project.new_guid
   end
   def find_bt_entity_for_face(source)
     bt_entity = nil

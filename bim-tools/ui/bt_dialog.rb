@@ -48,22 +48,32 @@ class Bt_dialog
     # start min/maximizer
     min_max
     
-    # define sections
+    # define sections, ordered by hash index number
     
     require 'bim-tools/ui/clsEntityInfo.rb'
-    section = ClsEntityInfo.new(self)
+    section = ClsEntityInfo.new(self, "0")
     name = section.name?
-    @h_sections[name] = section
+    @h_sections["0"] = section
     
     require 'bim-tools/ui/clsWallsFromEdges.rb'
-    section = ClsWallsFromEdges.new(self)
+    section = ClsWallsFromEdges.new(self, "1")
     name = section.name?
-    @h_sections[name] = section
+    @h_sections["1"] = section
     
     require 'bim-tools/ui/dlgSecPlanarsFromFaces.rb'
-    section = ClsDlgSecPlanarsFromFaces.new(self)
+    section = ClsDlgSecPlanarsFromFaces.new(self, "2")
     name = section.name?
-    @h_sections[name] = section
+    @h_sections["2"] = section
+    
+    require 'bim-tools/ui/dlgSecProjectData.rb'
+    section = ClsDlgSecProjectData.new(self, "3")
+    name = section.name?
+    @h_sections["3"] = section
+    
+    require 'bim-tools/ui/clsIfcExport.rb'
+    section = UiIfcExport.new(self, "4")
+    name = section.name?
+    @h_sections["4"] = section
     
     #@h_sections["ProjectData"] = ClsProjectData.new
     
@@ -96,8 +106,8 @@ class Bt_dialog
   end
   def html
     content = ""
-    @h_sections.each_value do |section|
-      content = content + section.html
+    @h_sections.each do |id, section|
+      content = content + section.html + "<hr />"
     end
     return html_top + content + html_bottom
   end

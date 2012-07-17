@@ -65,7 +65,7 @@ class PlanarFromFaces
     a_sources.each do |source|
 
       # create planar object if source is a SketchUp face
-      if source.typename == "Face"
+      if source.is_a?(Sketchup::Face)
         # check if a BIM-Tools entity already exists for the source face
         if @project.library.source_to_bt_entity(@project, source).nil?
           @a_planars << ClsPlanarElement.new(@project, source, @width, @offset)
