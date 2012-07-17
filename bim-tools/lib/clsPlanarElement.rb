@@ -43,12 +43,12 @@ class ClsPlanarElement < ClsBuildingElement
     else
       @offset = offset
     end
+  
     init_type
     add_to_lib
     set_guid
     set_attributes
     set_planes
-    
     #a_set_geometry = Array[self]
     # updates geometry connecting bt_entities(how to exclude double updating itself?)
     #@project.bt_entities_set_geometry(a_set_geometry)
@@ -130,7 +130,7 @@ class ClsPlanarElement < ClsBuildingElement
       end
       
       point = Geom::Point3d.new(x, y, z)
-      
+
       translation = Geom::Transformation.new point
       
       #origin.transform! t_base_plane
@@ -144,17 +144,19 @@ class ClsPlanarElement < ClsBuildingElement
       nOuterLoopNum = 0
       nLoopCount = 0
       
-      cutting_loops = get_cutting_loops[0]
-      temp_group = get_cutting_loops[1]
+      loops = get_openings[0]
+      #temporary group "get_openings[1]" gets deleted in line 243
       
-      loops = @source.loops + get_cutting_loops[0]
-      
+      #add the outer loop on position 0
+      loops.insert(0, @source.outer_loop)# << @source.outer_loop
+      nOuterLoopNum == 0
+
       loops.each do |loop|
         
         # keep the loops array-index of the outer loop
-        if loop == @source.outer_loop
-          nOuterLoopNum == nLoopCount
-        end
+        #if loop == @source.outer_loop
+        #  nOuterLoopNum == nLoopCount
+        #end
         
         nLoopCount += 1
         
@@ -301,20 +303,20 @@ class ClsPlanarElement < ClsBuildingElement
           begin
             face = group.entities.add_face pts
             face.material= @source.material
+            
+            #still errors
+            vector = Geom::Vector3d.new @source.normal
+            vector2 = Geom::Vector3d.new face.normal
+            d = vector.dot vector2
+            
+            unless d.abs < 0.000001
+              
+              #better not recreate layer every time?
+              Sketchup.active_model.layers.add "element_connections"
+              face.layer= "element_connections"
+            end
           rescue
             puts "error: failed to create face"
-          end
-          
-  #still errors
-          vector = Geom::Vector3d.new @source.normal
-          vector2 = Geom::Vector3d.new face.normal
-          d = vector.dot vector2
-          
-          unless d.abs < 0.000001
-            
-            #better not recreate layer every time?
-            Sketchup.active_model.layers.add "element_connections"
-            face.layer= "element_connections"
           end
 
           i += 1
@@ -358,10 +360,14 @@ class ClsPlanarElement < ClsBuildingElement
       set_attributes
     end
     #@geometry.material= @source.material
+    #@aOpenings.each do |opening|
+    #puts opening
+    #end
   end
   
-  # create array of loop objects for face-cutting instances
-  def get_cutting_loops
+  # returns an array of all openings in a planar object(face-cutting instances AND normal openings(loops))
+  # Make sure you delete the temporary group afterwards
+  def get_openings
   
     # start only if get_glued_instances is not nil???????
     
@@ -374,7 +380,7 @@ class ClsPlanarElement < ClsBuildingElement
     
       # copy all edges that are on the x-y plane to the new group
       instance.definition.entities.each do |entity|
-        if entity.typename == "Edge"
+        if entity.is_a?(Sketchup::Edge)
           if entity.start.position.z == 0
             if entity.end.position.z == 0
               new_start = entity.start.position.transform transform
@@ -396,24 +402,31 @@ class ClsPlanarElement < ClsBuildingElement
     
     # create all possible faces
     group.entities.each do |entity|
-      if entity.typename == "Edge"
+      if entity.is_a?(Sketchup::Edge)
         entity.find_faces
       end
     end
     
     # delete unneccesary edges
     group.entities.each do |entity|
-      if entity.typename == "Edge"
+      if entity.is_a?(Sketchup::Edge)
         if entity.faces.length != 1
           entity.erase!
         end
       end
     end
     
-    #find all outer loops
+    #find all outer loops of the cutting component
     group.entities.each do |entity|
-      if entity.typename == "Face"
+      if entity.is_a?(Sketchup::Face)
         aLoops << entity.outer_loop
+      end
+    end
+    
+    #get all non-outer_loops of the source face
+    @source.loops.each do |loop|
+      unless loop == @source.outer_loop
+        aLoops << loop
       end
     end
     
@@ -709,5 +722,9 @@ class ClsPlanarElement < ClsBuildingElement
     unless @source.nil?
       @source.set_attribute "ifc", "guid", guid?
     end
+  end
+  def ifc_export(exporter)
+    #require 'bim-tools/lib/ifc_export/clsIfc.rb'
+    IfcPlate.new(@project, exporter, self)
   end
 end

@@ -16,8 +16,9 @@
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class ClsDialogSection
-  def initialize(dialog)
+  def initialize(dialog, id)
     @dialog = dialog
+    @id = id.to_s
     @status = true
     @name = "default"
     @title = "default"
@@ -26,13 +27,13 @@ class ClsDialogSection
   def html
     if @status == true
       output = "
-<a href='skp:min_max@" + @name + "=false'><h1 style='background-image: url(" + @dialog.imagepath + "minimize.png)'><img src='" + @dialog.imagepath + @name + "_small.png' />" + @title + "</h1></a><hr />
+<a href='skp:min_max@" + @id + "=false'><h1 style='background-image: url(" + @dialog.imagepath + "minimize.png)'><img src='" + @dialog.imagepath + @name + "_small.png' />" + @title + "</h1></a>
       "
       output = output + @html_content
       return output
     else
       return"
-<a href='skp:min_max@" + @name + "=true'><h1 style='background-image: url(" + @dialog.imagepath + "maximize.png)'><img src='" + @dialog.imagepath + @name + "_small.png' />" + @title + "</h1></a><hr />
+<a href='skp:min_max@" + @id + "=true'><h1 style='background-image: url(" + @dialog.imagepath + "maximize.png)'><img src='" + @dialog.imagepath + @name + "_small.png' />" + @title + "</h1></a>
       "
     end
   end

@@ -18,12 +18,13 @@
 require 'bim-tools/ui/clsDialogSection.rb'
 
 class ClsDlgSecPlanarsFromFaces < ClsDialogSection
-  def initialize(dialog)
+  def initialize(dialog, id)
     @dialog = dialog
+    @id = id.to_s
     @project = dialog.project
     @status = true
     @name = "PlanarsFromFaces"
-    @title = "Thick faces"
+    @title = "Create thick faces"
     @buttontext = "Create thick faces"
     @width = "-"
     @offset = "-"
@@ -81,7 +82,7 @@ class ClsDlgSecPlanarsFromFaces < ClsDialogSection
   def html_content
     edges = false
     Sketchup.active_model.selection.each do |entity|
-      if entity.typename == "Face"
+      if entity.is_a?(Sketchup::Face)
         edges = true
         break
       end
@@ -89,15 +90,13 @@ class ClsDlgSecPlanarsFromFaces < ClsDialogSection
     if edges == false
       @status = false
       return "
-<h2>No edges selected</h2>
-<hr />
+<h2>No faces selected</h2>
       "
     else
       @status = true
       return "
 <form id='" + @title + "' name='" + @name + "' action='skp:" + @name + "@true'>
-" + html_properties_editable + "
-<hr />" + html_properties_fixed + "
+" + html_properties_editable + html_properties_fixed + "
 <input type='submit' name='submit' id='submit' value='" + @buttontext + "' />
 </form>
       "

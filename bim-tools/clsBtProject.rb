@@ -23,10 +23,31 @@ class ClsBtProject
   # attributes accessible from outside class
   # attr_accessor :id, :name, :description
   # when to use self.xxx?
-
+  attr_reader :guid, :name, :description, :site_name, :site_description, :building_name, :building_description, :author, :organisation_name, :organisation_description
+  
   def initialize(id=nil, name=nil, description=nil)
     @model = Sketchup.active_model
     @project = self
+    @guid = id
+    
+    # load default values
+    require 'bim-tools/lib/clsDefaultValues.rb'
+    default = ClsDefaultValues.new
+    
+    # set guid
+    set_guid(@guid)
+    
+    # basic project properties
+    @name = default.get("project_name")
+    @description = default.get("project_description")
+    @site_name = default.get("site_name")
+    @site_description = default.get("site_description")
+    @building_name = default.get("building_name")
+    @building_description = default.get("building_description")
+    @author = default.get("author")
+    @organisation_name = default.get("organisation_name")
+    @organisation_description = default.get("organisation_description")
+    
     require 'bim-tools/clsBtLibrary.rb'
     require 'bim-tools/lib/find_ifc_entities.rb'
     
@@ -46,9 +67,9 @@ class ClsBtProject
     @lib = ClsBtLibrary.new # would ClsBtEntities be a better name?
     
     @source_tracker = SourceTracker.new(self)
-    #set_id(id) # do or do not use "project" in method names?
-    #set_name(name)
-    #set_description(description)
+    #id=#("id") # do or do not use "project" in method names?
+    name=#("name")
+    description=#("description")
     
     # When creating a new project, check if there are any IFC entities present in the current SketchUp model
     ClsFindIfcEntities.new(self)
@@ -119,53 +140,57 @@ class ClsBtProject
   def visible_geometry?
     return @visible_geometry
   end
-  def set_id(id)
+  def set_guid(guid)
+    if guid.nil?
+    
+      # check if active_model already contains BtProject / IFC data and pass these to the project instance.
+      if @guid.nil?
+        @guid = @model.get_attribute "ifc", "IfcProject_GlobalId", nil
+      end
+    
+      # if id still empty, generate new id
+      if @guid.nil?
+        @guid = new_guid
+        @model.set_attribute "ifc", "IfcProject_GlobalId", @guid
+      end
+    else
+    
+      # if id == allowed guid-string
+      @guid = id
+    end
+  end
+  
+  # returns a new guid
+  # shouldn't this function be in some sort of basic library?
+  def new_guid
+    guid = '';22.times{|i|guid<<'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$'[rand(64)]}
+    return guid
+  end
+  def name=(name=nil)
   
     # check if active_model already contains BtProject / IFC data and pass these to the project instance.
-    @id = @model.get_attribute "ifc", "IfcProject_GlobalId", nil
-    
-    # if id == allowed guid-string
-    #   @id = id
-    # else
-    #   if @id does not exist
-    #     generate new guid
-    #     @id = guid
+    if name.nil?
+      @name = @model.get_attribute "ifc", "IfcProject_Name", nil
+    else
+      @name = name
+      @model.set_attribute "ifc", "IfcProject_Name", @name
+    end
   end
-  def set_name(name)
-  
-    # check if active_model already contains BtProject / IFC data and pass these to the project instance.
-    @name = @model.get_attribute "ifc", "IfcProject_Name", nil
-    
-    # if name == string
-    #   @name = name
-    # else
-    #   get default value for name
-    #   @name = default
-  end
-  def set_description(description)
+  def description=(description=nil)
     
     # check if active_model already contains BtProject / IFC data and pass these to the project instance.
-    @description = @model.get_attribute "ifc", "IfcProject_Description", nil
-    
-    # if description == string
-    #   @description = description
-    # else
-    #   get default value for description
-    #   @description = default
+    if description.nil?
+      @description = @model.get_attribute "ifc", "IfcProject_Description", nil
+    else
+      @description = description
+      @model.set_attribute "ifc", "IfcProject_Description", @description
+    end
   end
   def set_observers
     Sketchup.active_model.entities.add_observer(ProjectObserver.new(self))
   #  Sketchup.active_model.selection.add_observer(SelectionObserver.new)###################################################
   end
-  def get_id
-    return @id
-  end
-  def get_name
-    return @name
-  end
-  def get_description
-    return @description
-  end
+  
   def library
     return @lib
   end
@@ -239,12 +264,12 @@ class ClsBtProject
   # recursive loop that returns an array of all faces in active_model
   def get_all_faces(entities, a_faces)
     entities.each do |ent|
-      if ent.typename=="Group"
+      if ent.is_a?(Sketchup::Group)
         a_faces = a_faces + get_all_faces(ent.entities, a_faces)
-      elsif ent.typename=="ComponentInstance"
+      elsif ent.is_a?(Sketchup::ComponentInstance)
         a_faces = a_faces + get_all_faces(ent.definition.entities, a_faces)
       else
-        if ent.typename=="Face"
+        if ent.is_a?(Sketchup::Face)
           a_faces << ent
         end
       end
@@ -258,7 +283,7 @@ class ClsBtProject
     entities = @model.active_entities
     a_faces = Array.new
     entities.each do |ent|
-      if ent.typename=="Face"
+      if ent.is_a?(Sketchup::Face)
         a_faces << ent
       end
     end
@@ -372,7 +397,7 @@ class ClsBtProject
     # what to do if element is changed, and check if part of BtEntity.
     def onElementModified(entities, entity)
       unless entity.deleted?
-        if entity.typename == "Face"
+        if entity.is_a?(Sketchup::Face)#.typename == "Face"
         
           # check if entity is part of a building element
           bt_entity = @project.library.source_to_bt_entity(@project, entity)
@@ -394,7 +419,7 @@ class ClsBtProject
               @project.source_recovery
             end
           end
-        elsif entity.typename == "ComponentInstance"
+        elsif entity.is_a?(Sketchup::ComponentInstance)
           unless entity.glued_to.nil?
             source = entity.glued_to
             

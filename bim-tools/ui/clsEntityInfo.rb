@@ -18,8 +18,9 @@
 require 'bim-tools/ui/clsDialogSection.rb'
 
 class ClsEntityInfo < ClsDialogSection
-  def initialize(dialog)
+  def initialize(dialog, id)
     @dialog = dialog
+    @id = id.to_s
     @project = dialog.project
     @status = true
     @name = "EntityInfo"
@@ -36,7 +37,7 @@ class ClsEntityInfo < ClsDialogSection
   #action to be started on webdialog form submit
   def callback
     require 'bim-tools/tools/bt_entities_update.rb'
-    @dialog.webdialog.add_action_callback("EntityInfo") {|dialog, params|
+    @dialog.webdialog.add_action_callback(@name) {|dialog, params|
       width = "-"
       offset = "-"
 
@@ -63,8 +64,7 @@ class ClsEntityInfo < ClsDialogSection
       @status = true
       return "
 <form id='" + @name + "' name='" + @name + "' action='skp:" + @name + "@true'>
-  " + html_properties_editable + "
-  <hr />" + html_properties_fixed + "
+  " + html_properties_editable + html_properties_fixed + "
   <input type='submit' name='submit' id='submit' value='" + @buttontext + "' />
 </form>
       "
