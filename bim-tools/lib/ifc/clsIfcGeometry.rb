@@ -126,7 +126,7 @@ class IfcLocalPlacement < IfcObjectPlacement
     # "local" IFC array
     @a_Attributes = Array.new
     @a_Attributes << set_PlacementRelTo(bt_entity)# .record_nr
-    @a_Attributes << set_RelativePlacement(bt_entity).record_nr
+    @a_Attributes << set_RelativePlacement(bt_entity)#.record_nr
   end
   
   # this should link to the placement of the parent object
@@ -138,8 +138,12 @@ class IfcLocalPlacement < IfcObjectPlacement
   end
   
   def set_RelativePlacement(bt_entity)
-    transformation = bt_entity.geometry.transformation
-    return IfcAxis2Placement3D.new(@ifc_exporter, transformation)
+    if bt_entity.nil?
+      return "$"
+    else
+      transformation = bt_entity.geometry.transformation
+      return IfcAxis2Placement3D.new(@ifc_exporter, transformation).record_nr
+    end
   end
   
 end
@@ -209,15 +213,19 @@ class IfcDirection < IfcBase
     vector.normalize! # direction ratios == x,y and z value of normal vector
     @directionRatios = vector
     
+    #		lat = [lat[0], latpart[0] + latpart[1], latpart[2] + latpart[3]]
+    #return @ifc_exporter.ifcList(lat)
+    
     # "local" IFC array
     @a_Attributes = Array.new
-    s_Ifc = "(" # LIST
-    s_Ifc = s_Ifc + @directionRatios.x.to_s # LIST
-    s_Ifc = s_Ifc + ", "  # LIST
-    s_Ifc = s_Ifc + @directionRatios.y.to_s # LIST
-    s_Ifc = s_Ifc + ", "  # LIST
-    s_Ifc = s_Ifc + @directionRatios.z.to_s # LIST
-    s_Ifc = s_Ifc + ")"  # LIST
-    @a_Attributes << s_Ifc
+    #s_Ifc = "(" # LIST
+    #s_Ifc = s_Ifc + @ifc_exporter.ifcLengthMeasure(@directionRatios.x)#@directionRatios.x.to_s # LIST
+    #s_Ifc = s_Ifc + ", "  # LIST
+    #s_Ifc = s_Ifc + @ifc_exporter.ifcLengthMeasure(@directionRatios.y)#@directionRatios.y.to_s # LIST
+    #s_Ifc = s_Ifc + ", "  # LIST
+    #s_Ifc = s_Ifc + @ifc_exporter.ifcLengthMeasure(@directionRatios.z)#@directionRatios.z.to_s # LIST
+    #s_Ifc = s_Ifc + ")"  # LIST
+    aList = [@ifc_exporter.ifcReal(@directionRatios.x), @ifc_exporter.ifcReal(@directionRatios.y), @ifc_exporter.ifcReal(@directionRatios.z)]
+    @a_Attributes << @ifc_exporter.ifcList(aList)#s_Ifc
   end
 end

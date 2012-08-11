@@ -20,6 +20,7 @@ require 'bim-tools/lib/clsBuildingElement.rb'
 # building element subtype “planar” class
 # Object "parallel" to sketchup "face" object
 class ClsPlanarElement < ClsBuildingElement
+  attr_reader :element_type
   def initialize(project, face, width=nil, offset=nil) # profilecomponent=width, offset
     @project = project
     @source = face
@@ -725,6 +726,12 @@ class ClsPlanarElement < ClsBuildingElement
   end
   def ifc_export(exporter)
     #require 'bim-tools/lib/ifc_export/clsIfc.rb'
-    IfcPlate.new(@project, exporter, self)
+    if @element_type == "Wall"
+      IfcWall.new(@project, exporter, self)
+    elsif @element_type == "Floor" || @element_type == "Roof"
+      IfcSlab.new(@project, exporter, self)
+    else
+      IfcPlate.new(@project, exporter, self)
+    end
   end
 end
