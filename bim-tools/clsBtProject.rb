@@ -23,12 +23,13 @@ class ClsBtProject
   # attributes accessible from outside class
   # attr_accessor :id, :name, :description
   # when to use self.xxx?
-  attr_reader :guid, :name, :description, :site_name, :site_description, :building_name, :building_description, :author, :organisation_name, :organisation_description
+  attr_reader :guid, :name, :description, :site_guid, :site_name, :site_description, :building_name, :building_description, :author, :organisation_name, :organisation_description
   
   def initialize(id=nil, name=nil, description=nil)
     @model = Sketchup.active_model
     @project = self
     @guid = id
+    @site_guid = nil
     
     # load default values
     require 'bim-tools/lib/clsDefaultValues.rb'
@@ -36,6 +37,7 @@ class ClsBtProject
     
     # set guid
     set_guid(@guid)
+    set_site_guid
     
     # basic project properties
     @name = default.get("project_name")
@@ -156,7 +158,19 @@ class ClsBtProject
     else
     
       # if id == allowed guid-string
-      @guid = id
+      @guid = guid
+    end
+  end
+  def set_site_guid()
+    # check if active_model already contains BtProject / IFC data and pass these to the project instance.
+    if @site_guid.nil?
+      @site_guid = @model.get_attribute "ifc", "IfcSite_GlobalId", nil
+    end
+  
+    # if id still empty, generate new id
+    if @site_guid.nil?
+      @site_guid = new_guid
+      @model.set_attribute "ifc", "IfcSite_GlobalId", @site_guid
     end
   end
   

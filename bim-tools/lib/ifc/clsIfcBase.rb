@@ -43,8 +43,9 @@ class IfcRoot < IfcBase
   attr_accessor :globalId, :name, :description, :record_nr#, :ownerHistory
   def set_globalId(entity=nil)
     if entity.nil?
-      #####################################################################
-      @globalId = "'cg487fgf8y7gf874tfr8ot7go48734ryfo87tg'"
+      
+      # generate new guid
+      @globalId = "'" + @ifc_exporter.project.new_guid + "'"
     else
       @globalId = "'" + entity.guid? + "'"
     end
@@ -102,15 +103,15 @@ class IfcProject < IfcObject
   # RepresentationContexts	SET OF IfcRepresentationContext (ENTITY)	IfcProject
   # UnitsInContext	        IfcUnitAssignment (ENTITY)	              IfcProject
   attr_accessor :record_nr, :ifcOwnerHistory
-  def initialize(ifc_exporter, project)
+  def initialize(ifc_exporter)
     @ifc_exporter = ifc_exporter
-    @project = project
+    @project = ifc_exporter.project
     @entityType = "IFCPROJECT"
     @ifc_exporter.add(self)
-    @ifcOwnerHistory = IfcOwnerHistory.new(@ifc_exporter, @project)
+    @ifcOwnerHistory = IfcOwnerHistory.new(@ifc_exporter)
     ifcUnitAssignment = IfcUnitAssignment.new(@ifc_exporter)
     aIfcGeometricRepresentationContext = Array.new
-    aIfcGeometricRepresentationContext << IfcGeometricRepresentationContext.new(@ifc_exporter, @project).record_nr
+    aIfcGeometricRepresentationContext << @ifc_exporter.set_IfcGeometricRepresentationContext.record_nr#IfcGeometricRepresentationContext.new(@ifc_exporter, @project).record_nr
     
     # "local" IFC array
     @a_Attributes = Array.new
@@ -152,16 +153,16 @@ class IfcOwnerHistory < IfcBase
   # LastModifyingApplication  IfcApplication (ENTITY)	          IfcOwnerHistory (optional)
   # CreationDate	            IfcTimeStamp (INTEGER)	          IfcOwnerHistory
   attr_accessor :record_nr
-  def initialize(ifc_exporter, project)
+  def initialize(ifc_exporter)
     @ifc_exporter = ifc_exporter
-    @project = project
+    @project = ifc_exporter.project
     @entityType = "IFCOWNERHISTORY"
     @ifc_exporter.add(self)
     
     # "local" IFC array
     @a_Attributes = Array.new
-    @a_Attributes << IfcPersonAndOrganization.new(@ifc_exporter, @project).record_nr
-    @a_Attributes << IfcApplication.new(@ifc_exporter, @project).record_nr
+    @a_Attributes << IfcPersonAndOrganization.new(@ifc_exporter).record_nr
+    @a_Attributes << IfcApplication.new(@ifc_exporter).record_nr
     @a_Attributes << "$"
     @a_Attributes << ".ADDED." # ???
     @a_Attributes << "$"
@@ -178,15 +179,15 @@ class IfcPersonAndOrganization < IfcBase
   # TheOrganization	IfcOrganization (ENTITY)	    IfcPersonAndOrganization
   # Roles           LIST OF IfcActorRole (ENTITY)	IfcPersonAndOrganization (optional)
   attr_accessor :record_nr
-  def initialize(ifc_exporter, project)
+  def initialize(ifc_exporter)
     @ifc_exporter = ifc_exporter
-    @project = project
+    @project = ifc_exporter.project
     @entityType = "IFCPERSONANDORGANIZATION"
     @ifc_exporter.add(self)
     
     # "local" IFC array
     @a_Attributes = Array.new
-    @a_Attributes << IfcPerson.new(@ifc_exporter, @project).record_nr
+    @a_Attributes << IfcPerson.new(@ifc_exporter).record_nr
     @a_Attributes << @ifc_exporter.set_IfcOrganization.record_nr
     @a_Attributes << "$"
   end
@@ -204,9 +205,9 @@ class IfcPerson < IfcBase
   # Roles	        LIST OF IfcActorRole (ENTITY)	IfcPerson (optional)
   # Addresses	    LIST OF IfcAddress (ENTITY)	  IfcPerson (optional)
   attr_accessor :record_nr
-  def initialize(ifc_exporter, project)
+  def initialize(ifc_exporter)
     @ifc_exporter = ifc_exporter
-    @project = project
+    @project = ifc_exporter.project
     @entityType = "IFCPERSON"
     @ifc_exporter.add(self)
     
@@ -232,17 +233,17 @@ class IfcOrganization < IfcBase
   # Roles	        LIST OF IfcActorRole (ENTITY)	IfcOrganization (optional)
   # Addresses	    LIST OF IfcAddress (ENTITY)	  IfcOrganization (optional)
   attr_accessor :record_nr
-  def initialize(ifc_exporter, project)
+  def initialize(ifc_exporter, organisation_name="$", organisation_description="$")
     @ifc_exporter = ifc_exporter
-    @project = project
+    @project = ifc_exporter.project
     @entityType = "IFCORGANIZATION"
     @ifc_exporter.add(self)
     
     # "local" IFC array
     @a_Attributes = Array.new
     @a_Attributes << "$"
-    @a_Attributes << "'home'"
-    @a_Attributes << "$"
+    @a_Attributes << organisation_name
+    @a_Attributes << organisation_description
     @a_Attributes << "$"
     @a_Attributes << "$"
   end
@@ -256,15 +257,16 @@ class IfcApplication < IfcBase
   # ApplicationFullName	  IfcLabel (STRING)	        IfcApplication
   # ApplicationIdentifier	IfcIdentifier (STRING)	  IfcApplication
   attr_accessor :record_nr
-  def initialize(ifc_exporter, project)
+  def initialize(ifc_exporter)
     @ifc_exporter = ifc_exporter
-    @project = project
+    @project = ifc_exporter.project
     @entityType = "IFCAPPLICATION"
     @ifc_exporter.add(self)
     
     # "local" IFC array
     @a_Attributes = Array.new
-    @a_Attributes << @ifc_exporter.set_IfcOrganization.record_nr
+    #@a_Attributes << @ifc_exporter.set_IfcOrganization.record_nr
+    @a_Attributes << IfcOrganization.new(@ifc_exporter, "'BIM-Tools Project'", "'Open source Building-modeller project'").record_nr
     @a_Attributes << "'0.11.0'"
     @a_Attributes << "'BIM-Tools for SketchUp'"
     @a_Attributes << "'BIM-Tools'"

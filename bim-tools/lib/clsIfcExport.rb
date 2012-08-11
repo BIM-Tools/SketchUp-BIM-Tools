@@ -22,15 +22,22 @@ require 'bim-tools/lib/ifc/clsIfcBuilding.rb'
 
 # basic IFC export class
 class IfcExporter
-  attr_reader :a_Ifc, :ifcProject, :ifcOrganisation
+  attr_reader :a_Ifc, :ifcProject, :ifcOrganisation, :project, :ifcOwnerHistory, :ifcGeometricRepresentationContext, :ifcSite, :aContainedInSite
   def initialize(project, selection=nil)
     @model=Sketchup.active_model
     @project = project
-       
+    
     # "total" IFC array
     @a_Ifc = Array.new
     
+    # This array will hold the record numbers of all entities that are direct "child" objects to the site
+    @aContainedInSite = Array.new
+    
+    # create IfcProject object
     set_IfcProject
+    
+    # create IfcSite object
+    set_IfcSite
 
     path=@model.path.tr("\\", "/")
     if not path or path==""
@@ -45,7 +52,7 @@ class IfcExporter
       
     aEntities = get_entities
     if aEntities.length > 0 #if exportable objects have been found, start exporter
-	    self.export(aEntities)
+      self.export(aEntities)
     end
   end
   def export(aEntities)
@@ -54,10 +61,16 @@ class IfcExporter
     ifc_name = @skpName + ".ifc"
     ifc_filepath=File.join(@project_path, ifc_name)
     export_base_file = File.basename(@model.path, ".skp") + ".ifc"
-
+    
+    # create empty site container object
+    container = IfcRelContainedInSpatialStructure.new(self)
+    
     aEntities.each do |bt_entity|
       bt_entity.ifc_export(self)
     end
+    
+    # fill site container object with ifc entities
+    container.fill()
 
     File.open(ifc_filepath, 'w') do |file|
       file.write(self.ifc)
@@ -86,14 +99,41 @@ class IfcExporter
   end
   
   def set_IfcProject()
-    @ifcProject = IfcProject.new(self, @project)
+    @ifcProject = IfcProject.new(self)
+  end
+  
+  def set_IfcOwnerHistory()
+    if @ifcOwnerHistory.nil?
+      @ifcOwnerHistory = IfcOwnerHistory.new(self)
+    end
+    return @ifcOwnerHistory # is this needed or automatically returned?
   end
   
   def set_IfcOrganization()
     if @ifcOrganization.nil?
-      @ifcOrganization = IfcOrganization.new(self, @project)
+      organisation_name = "'" + @project.organisation_name + "'"
+      organisation_description = "'" + @project.organisation_description + "'"
+      @ifcOrganization = IfcOrganization.new(self, organisation_name, organisation_description)
     end
     return @ifcOrganization
+  end
+  
+  def set_IfcGeometricRepresentationContext()
+    if @ifcGeometricRepresentationContext.nil?
+      @ifcGeometricRepresentationContext = IfcGeometricRepresentationContext.new(self)
+    end
+    return @ifcGeometricRepresentationContext
+  end
+  
+  def set_IfcSite()
+    if @ifcSite.nil?
+      @ifcSite = IfcSite.new(self)
+    end
+    return @ifcSite
+  end
+  
+  def add_to_site(ifc_entity)
+    @aContainedInSite << ifc_entity.record_nr
   end
   
   # returns a string containing the full IFC file
@@ -132,6 +172,11 @@ END-ISO-10303-21;
   # returns a length converted to m, as a string
   def ifcLengthMeasure(number)
     return sprintf('%.8f', number.to_m).sub(/0{1,8}$/, '')
+  end
+  
+  # returns a Real number, rounded down, as a string
+  def ifcReal(number)
+    return sprintf('%.8f', number).sub(/0{1,8}$/, '')
   end
 
   # returns a IFC list-string out of an array

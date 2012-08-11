@@ -28,8 +28,8 @@ class IfcGeometricRepresentationContext < IfcBase
   # Precision	                      REAL	                      IfcGeometricRepresentationContext
   # WorldCoordinateSystem	          IfcAxis2Placement (SELECT)	IfcGeometricRepresentationContext
   # TrueNorth	                      IfcDirection (ENTITY)	      IfcGeometricRepresentationContext
-  def initialize(ifc_exporter, project)
-    @project = project
+  def initialize(ifc_exporter)
+    @project = ifc_exporter.project
     @ifc_exporter = ifc_exporter
     @entityType = "IFCGEOMETRICREPRESENTATIONCONTEXT"
     @ifc_exporter.add(self)
@@ -103,6 +103,9 @@ class IfcPlate < IfcBuildingElement
     
     # define openings
     openings
+    
+    #add self to the list of entities contained in the site
+    @ifc_exporter.add_to_site(self)
   end
   def openings
   
@@ -113,6 +116,234 @@ class IfcPlate < IfcBuildingElement
     end
     # delete temporary group
     aOpenings[1].erase!
+  end
+end
+
+#copy from ifcplate, needs cleaning up
+class IfcWall < IfcBuildingElement
+  def initialize(project, ifc_exporter, planar)
+    @project = project
+    @ifc_exporter = ifc_exporter
+    @planar = planar
+    @entityType = "IFCWALL"
+    @ifc_exporter.add(self)
+    
+    # "local" IFC array
+    @a_Attributes = Array.new
+    @a_Attributes << set_globalId(planar)
+    @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr #set_ownerHistory()
+    @a_Attributes << set_name(planar) #optional
+    @a_Attributes << set_description(planar) #optional
+    @a_Attributes << set_objectType("Planar") #optional
+    @a_Attributes << set_objectPlacement(planar).record_nr #optional
+    
+    # Ifcplate has 2 or more representations, 
+    # SweptSolid Representation(1)
+    # Clipping Representation
+    # MappedRepresentation(2)
+    aRepresentations = Array.new
+    aSweptSolid = Array.new
+    #83 = IFCSHAPEREPRESENTATION(#20, 'Body', 'SweptSolid', (#84));
+    loop = @planar.source.outer_loop
+    aSweptSolid << IfcExtrudedAreaSolid.new(@ifc_exporter, @planar, loop).record_nr
+    aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
+    #a_representations << IfcShapeRepresentation.new(@ifc_exporter, 'Body', 'MappedRepresentation', aRepresentations).record_nr # Mapped Representation
+    representations = IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)
+    
+    @a_Attributes << representations.record_nr #optional
+    @a_Attributes << set_tag(planar) #optional
+    
+    # define openings
+    openings
+    
+    #add self to the list of entities contained in the site
+    @ifc_exporter.add_to_site(self)
+  end
+  def openings
+  
+    # get all opening-loops from planar
+    aOpenings = @planar.get_openings
+    aOpenings[0].each do |opening|
+      IfcOpeningElement.new(@ifc_exporter, @planar, self, opening)
+    end
+    # delete temporary group
+    aOpenings[1].erase!
+  end
+end
+
+
+# IFCSITE('" + site_id + "', " + id_s(2) + ", '" + site_name + "', '" + site_description + "', $, " + id_s(24) + ", $, $, .ELEMENT., (" + lat[0] + ", " + lat[1] + ", " + lat[2] + "), (" + long[0] + ", " + long[1] + ", " + long[2] + "), $, $, $);"
+
+#24 = IFCSITE('2ZjPp2Z9P6D8e7u9GDoxr4', #2, 'Default Site', 'Description of Default Site', $, #25, $, $, .ELEMENT., (24, 28, 0), (54, 25, 0), 10., $, $);
+#25 = IFCLOCALPLACEMENT($, #26);
+#26 = IFCAXIS2PLACEMENT3D(#27, #28, #29);
+#27 = IFCCARTESIANPOINT((0.E-1, 0.E-1, 0.E-1));
+#28 = IFCDIRECTION((0.E-1, 0.E-1, 1.));
+#29 = IFCDIRECTION((1., 0.E-1, 0.E-1));
+
+#43 = IFCRELAGGREGATES('1f_92NYQD0lBChEeKfihEz', #2, 'BuildingContainer', 'BuildingContainer for BuildigStories', #30, (#37));
+#44 = IFCRELAGGREGATES('03QlbDcwz3wAQb2KBzxujQ', #2, 'SiteContainer', 'SiteContainer For Buildings', #24, (#30));
+#45 = IFCRELAGGREGATES('07oQHvxvvFswj91PBXi3Mo', #2, 'ProjectContainer', 'ProjectContainer for Sites', #1, (#24));
+#46 = IFCRELCONTAINEDINSPATIALSTRUCTURE('2Or2FBptr1gPkbt_$syMeu', #2, 'Default Building', 'Contents of Building Storey', (#47, #170), #37);
+class IfcSite < IfcProduct
+# Attribute	      Type	                                    Defined By
+# GlobalId	      IfcGloballyUniqueId (STRING)	            IfcRoot
+# OwnerHistory	  IfcOwnerHistory (ENTITY)	                IfcRoot
+# Name	          IfcLabel (STRING)	                        IfcRoot                     OPTIONAL
+# Description	    IfcText (STRING)	                        IfcRoot                     OPTIONAL
+# ObjectType	    IfcLabel (STRING)	                        IfcObject                   OPTIONAL
+# ObjectPlacement	IfcObjectPlacement (ENTITY)	              IfcProduct                  OPTIONAL
+# Representation	IfcProductRepresentation (ENTITY)	        IfcProduct                  OPTIONAL
+# LongName	      IfcLabel (STRING)	                        IfcSpatialStructureElement  OPTIONAL
+# CompositionType	IfcElementCompositionEnum (ENUM)	        IfcSpatialStructureElement
+# RefLatitude	    IfcCompoundPlaneAngleMeasure (AGGREGATE)	IfcSite                     OPTIONAL
+# RefLongitude	  IfcCompoundPlaneAngleMeasure (AGGREGATE)	IfcSite                     OPTIONAL
+# RefElevation	  IfcLengthMeasure (REAL)	                  IfcSite                     OPTIONAL
+# LandTitleNumber	IfcLabel (STRING)	                        IfcSite                     OPTIONAL
+# SiteAddress	    IfcPostalAddress (ENTITY)	                IfcSite                     OPTIONAL
+  def initialize(ifc_exporter)
+    @project = ifc_exporter.project
+    @ifc_exporter = ifc_exporter
+    @entityType = "IFCSITE"
+    #@ifcOwnerHistory = @ifc_exporter.set_IfcOwnerHistory
+    
+    # placement of the site is on the origin, it does not have geometry yet
+    site_placement = nil
+    
+    # set project location
+    set_latlong
+    
+    @ifc_exporter.add(self)
+    
+    # "local" IFC array
+    @a_Attributes = Array.new
+    @a_Attributes << "'" + @project.site_guid + "'"
+    @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr #set_ownerHistory()
+    @a_Attributes << set_name
+    @a_Attributes << set_description
+    @a_Attributes << "$"
+    @a_Attributes << set_objectPlacement(site_placement).record_nr
+    @a_Attributes << "$"
+    @a_Attributes << "$"
+    @a_Attributes << ".ELEMENT."
+    @a_Attributes << latitude
+    @a_Attributes << longtitude
+    @a_Attributes << elevation
+    @a_Attributes << "$"
+    @a_Attributes << "$"
+    
+  end
+  def set_name
+    if @project.site_name.nil?
+      return "$"
+    else
+      return "'" + @project.site_name + "'"
+    end
+  end
+  def set_description
+    if @project.site_description.nil?
+      return "$"
+    else
+      return "'" + @project.site_description + "'"
+    end
+  end
+  
+  # get project location
+  def set_latlong
+    local_coordinates = [0,0,0]
+		local_point = Geom::Point3d.new(local_coordinates)
+		ll = Sketchup.active_model.point_to_latlong(local_point)
+    @latlong = ll
+  end
+  def latitude
+		lat = sprintf("%.4f", @latlong[0])
+		lat = lat.split('.')
+		latpart = lat[1].split(//)
+		lat = [lat[0], latpart[0] + latpart[1], latpart[2] + latpart[3]]
+    return @ifc_exporter.ifcList(lat)
+  end
+  def longtitude
+		long = sprintf("%.4f", @latlong[1])
+		long = long.split('.')
+		longpart = long[1].split(//)
+		long = [long[0], longpart[0] + longpart[1], longpart[2] + longpart[3]]
+    return @ifc_exporter.ifcList(long)
+  end
+  def elevation
+    return @ifc_exporter.ifcLengthMeasure(@latlong[2])
+  end
+end
+
+#copy from ifcplate, needs cleaning up
+class IfcSlab < IfcBuildingElement
+# Attribute	      Type	                            Defined By
+# GlobalId	      IfcGloballyUniqueId (STRING)	    IfcRoot
+# OwnerHistory	  IfcOwnerHistory (ENTITY)	        IfcRoot
+# Name	          IfcLabel (STRING)	                IfcRoot
+# Description	    IfcText (STRING)	                IfcRoot
+# ObjectType	    IfcLabel (STRING)	                IfcObject
+# ObjectPlacement	IfcObjectPlacement (ENTITY)	      IfcProduct
+# Representation	IfcProductRepresentation (ENTITY)	IfcProduct
+# Tag	            IfcIdentifier (STRING)	          IfcElement
+# PredefinedType	IfcSlabTypeEnum (ENUM)	          IfcSlab
+  def initialize(project, ifc_exporter, planar)
+    @project = project
+    @ifc_exporter = ifc_exporter
+    @planar = planar
+    @entityType = "IFCSLAB"
+    @ifc_exporter.add(self)
+    
+    # "local" IFC array
+    @a_Attributes = Array.new
+    @a_Attributes << set_globalId(planar)
+    @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr #set_ownerHistory()
+    @a_Attributes << set_name(planar) #optional
+    @a_Attributes << set_description(planar) #optional
+    @a_Attributes << set_objectType("Planar") #optional
+    @a_Attributes << set_objectPlacement(planar).record_nr #optional
+    
+    # Ifcplate has 2 or more representations, 
+    # SweptSolid Representation(1)
+    # Clipping Representation
+    # MappedRepresentation(2)
+    aRepresentations = Array.new
+    aSweptSolid = Array.new
+    #83 = IFCSHAPEREPRESENTATION(#20, 'Body', 'SweptSolid', (#84));
+    loop = @planar.source.outer_loop
+    aSweptSolid << IfcExtrudedAreaSolid.new(@ifc_exporter, @planar, loop).record_nr
+    aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
+    #a_representations << IfcShapeRepresentation.new(@ifc_exporter, 'Body', 'MappedRepresentation', aRepresentations).record_nr # Mapped Representation
+    representations = IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)
+    
+    @a_Attributes << representations.record_nr #optional
+    @a_Attributes << set_tag(planar) #optional
+    @a_Attributes << ifcSlabTypeEnum(planar) #optional
+    
+    # define openings
+    openings
+    
+    #add self to the list of entities contained in the site
+    @ifc_exporter.add_to_site(self)
+  end
+  def openings
+  
+    # get all opening-loops from planar
+    aOpenings = @planar.get_openings
+    aOpenings[0].each do |opening|
+      IfcOpeningElement.new(@ifc_exporter, @planar, self, opening)
+    end
+    # delete temporary group
+    aOpenings[1].erase!
+  end
+  def ifcSlabTypeEnum(planar)
+    # Return options: FLOOR, ROOF, LANDING, BASESLAB, USERDEFINED, NOTDEFINED
+    if planar.element_type == "Floor"
+      return ".FLOOR."
+    elsif planar.element_type == "Roof"
+      return ".ROOF."
+    else
+      return ".NOTDEFINED."
+    end
   end
 end
 
@@ -161,7 +392,7 @@ class IfcOpeningElement < IfcElement
     
     # "local" IFC array
     @a_Attributes = Array.new
-    @a_Attributes << set_globalId(bt_entity)
+    @a_Attributes << "'" + @ifc_exporter.project.new_guid + "'"#set_globalId(bt_entity)
     @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr
     @a_Attributes << set_name #optional
     @a_Attributes << set_description #optional
@@ -188,6 +419,32 @@ class IfcOpeningElement < IfcElement
   end
   def set_Tag
     return "$"
+  end
+end
+
+#46 = IFCRELCONTAINEDINSPATIALSTRUCTURE('2Or2FBptr1gPkbt_$syMeu', #2, 'Default Building', 'Contents of Building Storey', (#47, #170), #37);
+class IfcRelContainedInSpatialStructure < IfcProduct
+  # Attribute	        Type	                              Defined By
+  # GlobalId	        IfcGloballyUniqueId (STRING)	      IfcRoot
+  # OwnerHistory	    IfcOwnerHistory (ENTITY)	          IfcRoot
+  # Name	            IfcLabel (STRING)	                  IfcRoot                           OPTIONAL
+  # Description	      IfcText (STRING)	                  IfcRoot                           OPTIONAL
+  # RelatedElements	  SET OF IfcProduct (ENTITY)	        IfcRelContainedInSpatialStructure
+  # RelatingStructure	IfcSpatialStructureElement (ENTITY)	IfcRelContainedInSpatialStructure
+  def initialize(ifc_exporter)
+    @ifc_exporter = ifc_exporter
+    @entityType = "IFCRELCONTAINEDINSPATIALSTRUCTURE"
+    @ifc_exporter.add(self)
+  end
+  def fill()
+    # "local" IFC array
+    @a_Attributes = Array.new
+    @a_Attributes << "'" + @ifc_exporter.project.new_guid + "'"
+    @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr
+    @a_Attributes << "'SiteContainer'" # only correct for site!!!
+    @a_Attributes << "'Contents of Site'" # only correct for site!!!
+    @a_Attributes << @ifc_exporter.ifcList(@ifc_exporter.aContainedInSite)
+    @a_Attributes << @ifc_exporter.ifcSite.record_nr
   end
 end
 
@@ -281,7 +538,7 @@ class IfcShapeRepresentation < IfcBase
     
     # "local" IFC array
     @a_Attributes = Array.new
-    @a_Attributes << "$"
+    @a_Attributes << @ifc_exporter.set_IfcGeometricRepresentationContext.record_nr
     @a_Attributes << @name #optional
     @a_Attributes << @description #optional
     @a_Attributes << set_representations #optional
