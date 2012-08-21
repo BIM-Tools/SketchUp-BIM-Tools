@@ -24,18 +24,3 @@ PC = WIN unless defined?(PC)
 require 'bim-tools/clsBimTools.rb'
 ClsBimTools.new
 
-# This observer creates a new bim-tools instance for every new model.
-class BtAppObserver < Sketchup::AppObserver
-  def onNewModel(model)
-    ClsBimTools.new
-
-    # Here is where one might attach other observers to the new model.
-    # model.selection.add_observer(MySelectionObserver.new)
-  end
-  def onOpenModel(model)
-    ClsBimTools.new
-  end
-end
-
-# Attach the observer
-Sketchup.add_observer(BtAppObserver.new)

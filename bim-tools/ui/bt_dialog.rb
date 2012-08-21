@@ -16,7 +16,8 @@
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class Bt_dialog
-
+  attr_reader :dialog
+  
   def initialize(project)
   
     @project = project
