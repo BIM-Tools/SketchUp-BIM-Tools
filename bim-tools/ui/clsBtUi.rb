@@ -17,11 +17,11 @@
 
 # Class BIM-Tools UI: manages UI elements
 class ClsBtUi
-  def initialize(project)
-    @project = project
+  def initialize(bim_tools)
+    @bim_tools = bim_tools
     
     # create BIM-Tools toolbar
     require "bim-tools/ui/toolbar.rb"
-    BtToolbar.new(@project)
+    BtToolbar.new(@bim_tools)
   end
 end

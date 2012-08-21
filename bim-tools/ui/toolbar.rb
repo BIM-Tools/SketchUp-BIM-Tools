@@ -16,18 +16,28 @@
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class BtToolbar
-  def initialize(project)
-    @project = project
+  def initialize(bim_tools)
     bt_toolbar = UI::Toolbar.new "BIM-Tools"
-
+    @active_model = Sketchup.active_model
+    
     cmd_bimtools = UI::Command.new("Open BIM-Tools window") {
+
+
       # dialog on close not nil but just not visible better? and not re-create but just make visible?
       if @dialog == nil
         require 'bim-tools/ui/bt_dialog.rb'
-        @dialog = Bt_dialog.new(@project)
+        @dialog = Bt_dialog.new(bim_tools.project)
+        bim_tools.dialog = @dialog
       else
-        @dialog.close
-        @dialog = nil
+        #if the webdialog is closed using the X-button, the dialog value will be nil
+        if @dialog.dialog.nil?
+          require 'bim-tools/ui/bt_dialog.rb'
+          @dialog = Bt_dialog.new(bim_tools.project)
+          bim_tools.dialog = @dialog
+        else
+          @dialog.close
+          @dialog = nil
+        end
       end
     }
 
@@ -36,7 +46,7 @@ class BtToolbar
       if selection.length > 0
         require "bim-tools/tools/planar_from_faces.rb"
         
-        planar_from_faces = PlanarFromFaces.new(@project, selection)
+        planar_from_faces = PlanarFromFaces.new(bim_tools.project, selection)
         Sketchup.active_model.select_tool planar_from_faces
         
         #planar_from_faces(@project, selection)
@@ -45,14 +55,14 @@ class BtToolbar
     
     # switch between source and geometry visibility
     cmd_toggle_geometry = UI::Command.new("Toggle between sources and geometry") {
-      @project.toggle_geometry()
+      bim_tools.project.toggle_geometry()
     }
     
     # Remove BIM properties from selection
     cmd_clear = UI::Command.new("Remove BIM properties from selection") {
       require "bim-tools/tools/clear_properties.rb"
       selection = Sketchup.active_model.selection
-      ClearProperties.new(@project, selection)
+      ClearProperties.new(bim_tools.project, selection)
     }
 
     cmd_bimtools.small_icon = "../images/bimtools_small.png"
