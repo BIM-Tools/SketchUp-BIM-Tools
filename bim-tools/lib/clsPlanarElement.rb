@@ -20,7 +20,7 @@ require 'bim-tools/lib/clsBuildingElement.rb'
 # building element subtype “planar” class
 # Object "parallel" to sketchup "face" object
 class ClsPlanarElement < ClsBuildingElement
-  attr_reader :element_type
+  attr_reader :element_type, :openings
   def initialize(project, face, width=nil, offset=nil) # profilecomponent=width, offset
     @project = project
     @source = face
@@ -28,6 +28,9 @@ class ClsPlanarElement < ClsBuildingElement
     @source_hidden = @project.visible_geometry? # for function in ClsBuildingElement
     @geometry
     @aPlanesHor
+    
+    # Array that holds sub-arrays containing the point3d-objects from all opening-loops
+    @openings = Array.new
     @element_type
     @name
     @description
@@ -431,6 +434,19 @@ class ClsPlanarElement < ClsBuildingElement
       end
     end
     
+    t = @geometry.transformation.inverse
+    
+    # copy all loop-Point3d-objects to the @openings array
+    # the purpose of this is that the temporary group could be erased earlier
+    aLoops.each do |loop|
+      opening = Array.new
+      loop.vertices.each do |vert|
+        point = vert.position.transform t
+        opening << point
+      end
+      @openings << opening
+    end
+    
     return Array[aLoops, group]
   end
   
@@ -727,7 +743,29 @@ class ClsPlanarElement < ClsBuildingElement
   def ifc_export(exporter)
     #require 'bim-tools/lib/ifc_export/clsIfc.rb'
     if @element_type == "Wall"
-      IfcWall.new(@project, exporter, self)
+    
+      # function to figure out if both values are almost equal
+      def approx(val, other, relative_epsilon=Float::EPSILON, epsilon=Float::EPSILON)
+        difference = other - val
+        return true if difference.abs <= epsilon
+        relative_error = (difference / (val > other ? val : other)).abs
+        return relative_error <= relative_epsilon
+      end
+      square_area = height? * length?
+      
+      # if the area of the source face equals length*height the face is a square
+      # exept when wall openings are present!!!
+      # and probably a wallstandardcase
+      if approx(@source.area, square_area)
+      
+        # if the source face vector has an Z-value of zero then the wall is a standardcase
+        # BEWARE OF NESTED COMPONENTS!
+        if @source.normal.z == 0
+          IfcWallStandardCase.new(@project, exporter, self)
+        end
+      else
+        IfcWall.new(@project, exporter, self)
+      end
     elsif @element_type == "Floor" || @element_type == "Roof"
       IfcSlab.new(@project, exporter, self)
     else
