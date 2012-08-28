@@ -116,6 +116,8 @@ class ClsFindIfcEntities
           planar.name= guid[1][1].get_attribute "ifc", "name"
           planar.description= guid[1][1].get_attribute "ifc", "description"
           planar.element_type= guid[1][1].get_attribute "ifc", "type"
+          output = planar.get_openings
+          output[1].erase!
         end
       end
     end

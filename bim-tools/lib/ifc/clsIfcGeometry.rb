@@ -24,14 +24,14 @@ class IfcExtrudedAreaSolid < IfcBase
   # ExtrudedDirection	IfcDirection (ENTITY)	          IfcExtrudedAreaSolid
   # Depth	            IfcPositiveLengthMeasure (REAL)	IfcExtrudedAreaSolid
   attr_accessor :sweptArea, :position, :extrudedDirection, :depth, :record_nr, :entityType
-  def initialize(ifc_exporter, bt_entity, loop)
+  def initialize(ifc_exporter, bt_entity, loop, depth=nil)
     @ifc_exporter = ifc_exporter
     @bt_entity = bt_entity
     @loop = loop
     @entityType = "IFCEXTRUDEDAREASOLID"
     @ifc_exporter.add(self)
     
-    offset = @bt_entity.offset #* -1
+    offset = @bt_entity.offset * -1
     vector = Geom::Vector3d.new 0,0,offset
     @transformation = Geom::Transformation.translation vector
     
@@ -41,8 +41,8 @@ class IfcExtrudedAreaSolid < IfcBase
     @a_Attributes = Array.new
     @a_Attributes << set_SweptArea
     @a_Attributes << set_Position
-    @a_Attributes << set_ExtrudedDirection
-    @a_Attributes << set_Depth
+    @a_Attributes << set_ExtrudedDirection(loop)
+    @a_Attributes << set_Depth(depth)
   end
   def set_SweptArea
 #85 = IFCARBITRARYCLOSEDPROFILEDEF(.AREA., $, #86);
@@ -57,12 +57,37 @@ class IfcExtrudedAreaSolid < IfcBase
   def set_Position
     return IfcAxis2Placement3D.new(@ifc_exporter, @transformation).record_nr
   end
-  def set_ExtrudedDirection
-    vec = Geom::Vector3d.new(0,0,-1) #@transformation.zaxis
+  def set_ExtrudedDirection(loop)
+    vec = Geom::Vector3d.new(0,0,1) #loop.face.normal.transform @transformation.inverse#@transformation.zaxis#.reverse #
     return IfcDirection.new(@ifc_exporter, vec).record_nr
   end
-  def set_Depth
-    return @ifc_exporter.ifcLengthMeasure(@bt_entity.width)
+  def set_Depth(depth=nil)
+    if depth.nil?
+      return @ifc_exporter.ifcLengthMeasure(@bt_entity.width)
+    else
+      return @ifc_exporter.ifcLengthMeasure(depth)
+    end
+  end
+end
+
+class WscIfcExtrudedAreaSolid < IfcExtrudedAreaSolid # special version for ifcwallstandardcase
+  attr_accessor :sweptArea, :position, :extrudedDirection, :depth, :record_nr, :entityType
+  def initialize(ifc_exporter, bt_entity, loop, depth=nil)
+    @ifc_exporter = ifc_exporter
+    @bt_entity = bt_entity
+    @loop = loop
+    @entityType = "IFCEXTRUDEDAREASOLID"
+    @ifc_exporter.add(self)
+    
+    vector = Geom::Vector3d.new 0,0,0
+    @transformation = Geom::Transformation.translation vector
+    
+    # "local" IFC array
+    @a_Attributes = Array.new
+    @a_Attributes << set_SweptArea
+    @a_Attributes << set_Position
+    @a_Attributes << set_ExtrudedDirection(loop)
+    @a_Attributes << set_Depth(depth)
   end
 end
 
@@ -96,11 +121,12 @@ class IfcPolyline < IfcBase
     @a_Attributes = Array.new
     pts = Array.new
     
-    t = @bt_entity.geometry.transformation.inverse
+    #t = @bt_entity.geometry.transformation.inverse
     #verts = bt_entity.source.outer_loop.vertices
-    verts = @loop.vertices
-    verts.each do |vert|
-      position = vert.position.transform! t
+    #verts = @loop.vertices
+    #verts.each do |vert|
+      #position = vert.position#.transform! t
+    @loop.each do |position|
       ifcCartesianPoint = IfcCartesianPoint.new(@ifc_exporter, position)
       pts << ifcCartesianPoint.record_nr
     end
@@ -118,34 +144,27 @@ class IfcObjectPlacement < IfcBase
 end
 
 class IfcLocalPlacement < IfcObjectPlacement
-  def initialize(ifc_exporter, bt_entity)
+  def initialize(ifc_exporter, transformation_parent=nil, transformation=nil)
     @ifc_exporter = ifc_exporter
     @entityType = "IFCLOCALPLACEMENT"
     @ifc_exporter.add(self)
     
     # "local" IFC array
     @a_Attributes = Array.new
-    @a_Attributes << set_PlacementRelTo(bt_entity)# .record_nr
-    @a_Attributes << set_RelativePlacement(bt_entity)#.record_nr
+    @a_Attributes << set_placement(transformation_parent)
+    @a_Attributes << set_placement(transformation)
   end
   
   # this should link to the placement of the parent object
   # for simplicity returns origin
   # ERROR: Field PlacementRelTo of IfcLocalPlacement cannot contain a IfcAxis2Placement3D
-  def set_PlacementRelTo(bt_entity)
-    #transformation = Geom::Transformation.new
-    return "$" # IfcAxis2Placement3D.new(@ifc_exporter, transformation)
-  end
-  
-  def set_RelativePlacement(bt_entity)
-    if bt_entity.nil?
+  def set_placement(transformation)
+    if transformation.nil?
       return "$"
     else
-      transformation = bt_entity.geometry.transformation
       return IfcAxis2Placement3D.new(@ifc_exporter, transformation).record_nr
     end
   end
-  
 end
 
 class IfcPlacement < IfcBase

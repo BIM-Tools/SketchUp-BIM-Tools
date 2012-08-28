@@ -51,7 +51,18 @@ end
 class IfcProduct < IfcObject
   attr_accessor :objectPlacement, :representation
   def set_objectPlacement(bt_entity)
-    return IfcLocalPlacement.new(@ifc_exporter, bt_entity)
+    
+    #parent transformation
+    transformation_parent = nil
+    
+    #entity transformation
+    if bt_entity.nil?
+      transformation = nil
+    else
+      transformation = bt_entity.geometry.transformation
+    end
+    
+    return IfcLocalPlacement.new(@ifc_exporter, transformation_parent, transformation)
   end
   def set_representation(entity)
     @representation = entity.source
@@ -84,21 +95,7 @@ class IfcPlate < IfcBuildingElement
     @a_Attributes << set_description(planar) #optional
     @a_Attributes << set_objectType("Planar") #optional
     @a_Attributes << set_objectPlacement(planar).record_nr #optional
-    
-    # Ifcplate has 2 or more representations, 
-    # SweptSolid Representation(1)
-    # Clipping Representation
-    # MappedRepresentation(2)
-    aRepresentations = Array.new
-    aSweptSolid = Array.new
-    #83 = IFCSHAPEREPRESENTATION(#20, 'Body', 'SweptSolid', (#84));
-    loop = @planar.source.outer_loop
-    aSweptSolid << IfcExtrudedAreaSolid.new(@ifc_exporter, @planar, loop).record_nr
-    aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
-    #a_representations << IfcShapeRepresentation.new(@ifc_exporter, 'Body', 'MappedRepresentation', aRepresentations).record_nr # Mapped Representation
-    representations = IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)
-    
-    @a_Attributes << representations.record_nr #optional
+    @a_Attributes << set_representations.record_nr #optional
     @a_Attributes << set_tag(planar) #optional
     
     # define openings
@@ -107,20 +104,43 @@ class IfcPlate < IfcBuildingElement
     #add self to the list of entities contained in the site
     @ifc_exporter.add_to_site(self)
   end
+  def set_representations
+    # Ifcplate has 2 or more representations, 
+    # SweptSolid Representation(1)
+    # Clipping Representation
+    # MappedRepresentation(2)
+    aRepresentations = Array.new
+    aSweptSolid = Array.new
+    #83 = IFCSHAPEREPRESENTATION(#20, 'Body', 'SweptSolid', (#84));
+    loop = @planar.source.outer_loop
+    
+    @points = Array.new
+    loop.vertices.each do |vert|
+      t = @planar.geometry.transformation.inverse
+      p = vert.position.transform! t
+      @points << p
+    end
+    
+    aSweptSolid << IfcExtrudedAreaSolid.new(@ifc_exporter, @planar, @points).record_nr
+    aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
+    #a_representations << IfcShapeRepresentation.new(@ifc_exporter, 'Body', 'MappedRepresentation', aRepresentations).record_nr # Mapped Representation
+    return IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)
+  end
   def openings
   
     # get all opening-loops from planar
-    aOpenings = @planar.get_openings
-    aOpenings[0].each do |opening|
+    #aOpenings = @planar.get_openings
+    #aOpenings[0].each do |opening|
+    @planar.openings.each do |opening|
       IfcOpeningElement.new(@ifc_exporter, @planar, self, opening)
     end
     # delete temporary group
-    aOpenings[1].erase!
+    #aOpenings[1].erase!
   end
 end
 
 #copy from ifcplate, needs cleaning up
-class IfcWall < IfcBuildingElement
+class IfcWall < IfcPlate #officially not correct!!! IfcBuildingElement
   def initialize(project, ifc_exporter, planar)
     @project = project
     @ifc_exporter = ifc_exporter
@@ -136,21 +156,7 @@ class IfcWall < IfcBuildingElement
     @a_Attributes << set_description(planar) #optional
     @a_Attributes << set_objectType("Planar") #optional
     @a_Attributes << set_objectPlacement(planar).record_nr #optional
-    
-    # Ifcplate has 2 or more representations, 
-    # SweptSolid Representation(1)
-    # Clipping Representation
-    # MappedRepresentation(2)
-    aRepresentations = Array.new
-    aSweptSolid = Array.new
-    #83 = IFCSHAPEREPRESENTATION(#20, 'Body', 'SweptSolid', (#84));
-    loop = @planar.source.outer_loop
-    aSweptSolid << IfcExtrudedAreaSolid.new(@ifc_exporter, @planar, loop).record_nr
-    aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
-    #a_representations << IfcShapeRepresentation.new(@ifc_exporter, 'Body', 'MappedRepresentation', aRepresentations).record_nr # Mapped Representation
-    representations = IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)
-    
-    @a_Attributes << representations.record_nr #optional
+    @a_Attributes << set_representations.record_nr #optional
     @a_Attributes << set_tag(planar) #optional
     
     # define openings
@@ -159,18 +165,141 @@ class IfcWall < IfcBuildingElement
     #add self to the list of entities contained in the site
     @ifc_exporter.add_to_site(self)
   end
-  def openings
-  
-    # get all opening-loops from planar
-    aOpenings = @planar.get_openings
-    aOpenings[0].each do |opening|
-      IfcOpeningElement.new(@ifc_exporter, @planar, self, opening)
-    end
-    # delete temporary group
-    aOpenings[1].erase!
-  end
 end
 
+#copy from IfcWall, needs cleaning up
+class IfcWallStandardCase < IfcWall
+# Attribute	      Type	                            Defined By
+# GlobalId	      IfcGloballyUniqueId (STRING)	    IfcRoot
+# OwnerHistory	  IfcOwnerHistory (ENTITY)	        IfcRoot
+# Name	          IfcLabel (STRING)	                IfcRoot     OPTIONAL
+# Description	    IfcText (STRING)	                IfcRoot     OPTIONAL
+# ObjectType	    IfcLabel (STRING)	                IfcObject   OPTIONAL
+# ObjectPlacement	IfcObjectPlacement (ENTITY)	      IfcProduct  OPTIONAL
+# Representation	IfcProductRepresentation (ENTITY)	IfcProduct  OPTIONAL
+# Tag           	IfcIdentifier (STRING)	          IfcElement  OPTIONAL
+  def initialize(project, ifc_exporter, planar)
+    @project = project
+    @ifc_exporter = ifc_exporter
+    @planar = planar
+    @entityType = "IFCWALLSTANDARDCASE"
+    @ifc_exporter.add(self)
+
+    # "local" IFC array
+    @a_Attributes = Array.new
+    @a_Attributes << set_globalId(planar)
+    @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr
+    @a_Attributes << set_name(planar)
+    @a_Attributes << set_description(planar)
+    @a_Attributes << set_objectType("Planar")
+    @a_Attributes << set_objectPlacement(planar).record_nr
+    @a_Attributes << set_representations.record_nr
+    @a_Attributes << set_tag(planar)
+    
+    # define openings
+    openings
+    
+    #add self to the list of entities contained in the site
+    @ifc_exporter.add_to_site(self)
+  end
+  def set_objectPlacement(bt_entity)
+    
+    #parent transformation
+    transformation_parent = nil
+    
+    #entity transformation, rotated for IfcWallStandardCase
+    if bt_entity.nil?
+      transformation = nil
+    else
+      # hij moet draaien om de interne as van de group en niet om die van de oorsprong!!!!!!!!!!!!!!
+      t_bt_entity = bt_entity.geometry.transformation
+      #xaxis = t_bt_entity.xaxis
+      #yaxis = t_bt_entity.zaxis.reverse
+      #origin = t_bt_entity.origin
+      #transformation = Geom::Transformation.new(origin, xaxis, yaxis)
+      point = Geom::Point3d.new(0, 0, 0)
+      vector = Geom::Vector3d.new(1, 0, 0)
+      angle = Math::PI / -2
+      rotation = Geom::Transformation.rotation(point, vector, angle)
+      transformation = t_bt_entity * rotation
+    end
+    return IfcLocalPlacement.new(@ifc_exporter, transformation_parent, transformation)
+  end
+  def set_representations
+    aRepresentations = Array.new
+    aSweptSolid = Array.new
+    projection = get_projection(@planar)
+    loop = projection
+    aSweptSolid << WscIfcExtrudedAreaSolid.new(@ifc_exporter, @planar, loop, @planar.height?).record_nr
+    aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
+    #group.erase!
+    return IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)
+  end
+  
+  # returns the loop (and group) of the vertical projection of the wall
+  # Make sure you delete the temporary group afterwards
+  # based on clsPlanarElement.get_openings
+  def get_projection(bt_entity)
+    @geometry = bt_entity.geometry
+    loop = nil
+    group = @geometry.entities.add_group
+    
+      point = Geom::Point3d.new(0, 0, 0)
+      vector = Geom::Vector3d.new(1, 0, 0)
+      angle = Math::PI / -2
+      rotation = Geom::Transformation.rotation(point, vector, angle)
+      group.transform! rotation
+    
+    #transform =  group.transformation.invert! * instance.transformation
+  
+    # copy all geometry edges to the new group
+    @geometry.entities.each do |entity|
+      if entity.is_a?(Sketchup::Edge)
+        new_start = entity.start.position.transform rotation.inverse
+        new_start.z= 0
+        new_end = entity.end.position.transform rotation.inverse
+        new_end.z= 0
+        group.entities.add_edges new_start, new_end
+      end
+    end
+    
+    # intersect all edges
+    faces=[]
+    group.entities.each do |entity|
+      faces << entity
+    end
+    group.entities.intersect_with false, group.transformation, group.entities, group.transformation, true, faces
+    
+    # create all possible faces
+    group.entities.each do |entity|
+      if entity.is_a?(Sketchup::Edge)
+        entity.find_faces
+      end
+    end
+    
+    # delete unneccesary edges
+    group.entities.each do |entity|
+      if entity.is_a?(Sketchup::Edge)
+        if entity.faces.length != 1
+          entity.erase!
+        end
+      end
+    end
+    
+    #find all outer loops of the cutting component
+    group.entities.each do |entity|
+      if entity.is_a?(Sketchup::Face)
+        loop = entity.outer_loop
+      end
+    end
+    points = Array.new
+    loop.vertices.each do |vert|
+      points << vert.position
+    end
+    group.erase!
+    return points
+  end
+end
 
 # IFCSITE('" + site_id + "', " + id_s(2) + ", '" + site_name + "', '" + site_description + "', $, " + id_s(24) + ", $, $, .ELEMENT., (" + lat[0] + ", " + lat[1] + ", " + lat[2] + "), (" + long[0] + ", " + long[1] + ", " + long[2] + "), $, $, $);"
 
@@ -275,7 +404,7 @@ class IfcSite < IfcProduct
 end
 
 #copy from ifcplate, needs cleaning up
-class IfcSlab < IfcBuildingElement
+class IfcSlab < IfcPlate
 # Attribute	      Type	                            Defined By
 # GlobalId	      IfcGloballyUniqueId (STRING)	    IfcRoot
 # OwnerHistory	  IfcOwnerHistory (ENTITY)	        IfcRoot
@@ -301,21 +430,7 @@ class IfcSlab < IfcBuildingElement
     @a_Attributes << set_description(planar) #optional
     @a_Attributes << set_objectType("Planar") #optional
     @a_Attributes << set_objectPlacement(planar).record_nr #optional
-    
-    # Ifcplate has 2 or more representations, 
-    # SweptSolid Representation(1)
-    # Clipping Representation
-    # MappedRepresentation(2)
-    aRepresentations = Array.new
-    aSweptSolid = Array.new
-    #83 = IFCSHAPEREPRESENTATION(#20, 'Body', 'SweptSolid', (#84));
-    loop = @planar.source.outer_loop
-    aSweptSolid << IfcExtrudedAreaSolid.new(@ifc_exporter, @planar, loop).record_nr
-    aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
-    #a_representations << IfcShapeRepresentation.new(@ifc_exporter, 'Body', 'MappedRepresentation', aRepresentations).record_nr # Mapped Representation
-    representations = IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)
-    
-    @a_Attributes << representations.record_nr #optional
+    @a_Attributes << set_representations.record_nr #optional
     @a_Attributes << set_tag(planar) #optional
     @a_Attributes << ifcSlabTypeEnum(planar) #optional
     
@@ -324,16 +439,6 @@ class IfcSlab < IfcBuildingElement
     
     #add self to the list of entities contained in the site
     @ifc_exporter.add_to_site(self)
-  end
-  def openings
-  
-    # get all opening-loops from planar
-    aOpenings = @planar.get_openings
-    aOpenings[0].each do |opening|
-      IfcOpeningElement.new(@ifc_exporter, @planar, self, opening)
-    end
-    # delete temporary group
-    aOpenings[1].erase!
   end
   def ifcSlabTypeEnum(planar)
     # Return options: FLOOR, ROOF, LANDING, BASESLAB, USERDEFINED, NOTDEFINED
