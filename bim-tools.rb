@@ -15,11 +15,18 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# roadmap 0.12:
-# fix side-faces normal direction in openings
+# roadmap 0.13:
 # columns
 
+# roadmap 0.12:
+# fix side-faces normal direction in openings
+# fix project properties(different way of reading/writing properties? one at a time instead of array?)
+# fix double click to re-open dialog
+# fix multiple models for mac
+# ifc materials(layers)
+
 # Changelog:
+# 120916 Fixed saving + exporting of project data
 # 120717 Re-implemented basic IFC export(IfcPlate elements only)
 # 120603 Added top menu to webdialog
 # 120602 Added dialog section for thick faces
@@ -42,12 +49,18 @@
 # 120311 tested webdialog on IE8, works fine, shows min/max-image, but content width is a bit off...
 # webdialog show_modal for mac
 
-# Create an entry in the Extension list that loads a script called
-# bim-tools.rb.
-require 'sketchup.rb'
-require 'extensions.rb'
+module Brewsky
+  module BimTools
 
-bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-bimtools.version = '0.11.0'
-bimtools.description = "Tools to create building parts and export these to IFC."
-Sketchup.register_extension bimtools, true
+    # Create an entry in the Extension list that loads a script called
+    # bim-tools.rb.
+    require 'sketchup.rb'
+    require 'extensions.rb'
+
+    bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
+    bimtools.version = '0.11.0'
+    bimtools.description = "Tools to create building parts and export these to IFC."
+    Sketchup.register_extension bimtools, true
+
+  end
+end

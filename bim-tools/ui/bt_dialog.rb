@@ -15,197 +15,201 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-class Bt_dialog
-  attr_reader :dialog
-  
-  def initialize(project)
-  
-    @project = project
-    bt_lib = @project.library
+module Brewsky::BimTools
 
-    # Create WebDialog instance, patched for OSX
-    require 'bim-tools/lib/WebdialogPatch.rb'
-    @dialog = WebDialogPatch.new("BIM-Tools menu", false, "bim-tools", 243, 320, 150, 150, true)
-
-    # Create WebDialog instance
-    # @dialog = UI::WebDialog.new("BIM-Tools menu")
-    @dialog.min_width= 243
-    @dialog.max_width= 243
+  class Bt_dialog
+    attr_reader :dialog
     
-    @pathname = File.expand_path( File.dirname(__FILE__) )
-    mainpath = @pathname.split('ui')[0]
-    @imagepath = mainpath + "images/"
-    @bt_lib = bt_lib
-    @javascript = ""
+    def initialize(project)
     
-    callback
-    
-    # create BIM-Tools selection object
-    require 'bim-tools/lib/clsBtSelection.rb'
-    @selection = ClsBtSelection.new(@project, self)
-    
-    @h_sections = Hash.new
-    
-    # start min/maximizer
-    min_max
-    
-    # define sections, ordered by hash index number
-    
-    require 'bim-tools/ui/clsEntityInfo.rb'
-    section = ClsEntityInfo.new(self, "0")
-    name = section.name?
-    @h_sections["0"] = section
-    
-    require 'bim-tools/ui/clsWallsFromEdges.rb'
-    section = ClsWallsFromEdges.new(self, "1")
-    name = section.name?
-    @h_sections["1"] = section
-    
-    require 'bim-tools/ui/dlgSecPlanarsFromFaces.rb'
-    section = ClsDlgSecPlanarsFromFaces.new(self, "2")
-    name = section.name?
-    @h_sections["2"] = section
-    
-    require 'bim-tools/ui/dlgSecProjectData.rb'
-    section = ClsDlgSecProjectData.new(self, "3")
-    name = section.name?
-    @h_sections["3"] = section
-    
-    require 'bim-tools/ui/clsIfcExport.rb'
-    section = UiIfcExport.new(self, "4")
-    name = section.name?
-    @h_sections["4"] = section
-    
-    #@h_sections["ProjectData"] = ClsProjectData.new
-    
-    @dialog.set_html( html )
-    self.show
-    
-    # Attach the observer.
-    Sketchup.active_model.selection.add_observer(MySelectionObserver.new(@project, self, @h_sections))
-		
-  end
-  def show
-    MAC ? @dialog.show_modal() : @dialog.show()
-    # return nil
-  end
-  def refresh
-    @dialog.set_html( html )
-  end
-  def callback
-    self.webdialog.add_action_callback("cmd_bimtools") {|dialog, params|
-      self.close
-    }
-    self.webdialog.add_action_callback("cmd_toggle_geometry") {|dialog, params|
-      @project.toggle_geometry()
-    }
-    self.webdialog.add_action_callback("cmd_clear") {|dialog, params|
-      require "bim-tools/tools/clear_properties.rb"
-      selection = Sketchup.active_model.selection
-      ClearProperties.new(@project, selection)
-    }
-  end
-  def html
-    content = ""
-    @h_sections.each do |id, section|
-      content = content + section.html + "<hr />"
-    end
-    return html_top + content + html_bottom
-  end
-  def html_top
-    return "
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <meta charset=utf-8'>
-    <title>BIM-Tools - webdialog</title>
-    <link href='" + @pathname + "/bt_dialog.css' rel='stylesheet' type='text/css' />
-    <style type='text/css'> h1 {background-image: url(" + @imagepath + "minimize.png)}</style>
-    </head>
-    <body>
-    <ul>
-    <li><a href='skp:cmd_bimtools@true'><img src='" + self.imagepath + "bimtools_large.png' /></a></li>
-    <li><a href='skp:cmd_toggle_geometry@true'><img src='" + self.imagepath + "ToggleGeometry_large.png' /></a></li>
-    <li><a href='skp:cmd_clear@true'><img src='" + self.imagepath + "clear_large.png' /></a></li>
-    </ul>
-    <hr />
-    "
-  end
-  def html_bottom
-    return "
-    </body>
-    </html>
-    "
-  end
+      @project = project
+      bt_lib = @project.library
   
-  #action to be started on webdialog minimize/maximize
-  def min_max
-    @dialog.add_action_callback("min_max") {|dialog, params|
-
-      #split string into separate values
-      values =  params.split("=")
-      section = values[0]
-      max = values[1]
-      if max == "true"
-        @h_sections[section].maximize
-      else
-        @h_sections[section].minimize
-      end
+      # Create WebDialog instance, patched for OSX
+      require 'bim-tools/lib/WebdialogPatch.rb'
+      @dialog = WebDialogPatch.new("BIM-Tools menu", false, "bim-tools", 243, 320, 150, 150, true)
+  
+      # Create WebDialog instance
+      # @dialog = UI::WebDialog.new("BIM-Tools menu")
+      @dialog.min_width= 243
+      @dialog.max_width= 243
+      
+      @pathname = File.expand_path( File.dirname(__FILE__) )
+      mainpath = @pathname.split('ui')[0]
+      @imagepath = mainpath + "images/"
+      @bt_lib = bt_lib
+      @javascript = ""
+      
+      callback
+      
+      # create BIM-Tools selection object
+      require 'bim-tools/lib/clsBtSelection.rb'
+      @selection = ClsBtSelection.new(@project, self)
+      
+      @h_sections = Hash.new
+      
+      # start min/maximizer
+      min_max
+      
+      # define sections, ordered by hash index number
+      
+      require 'bim-tools/ui/clsEntityInfo.rb'
+      section = ClsEntityInfo.new(self, "0")
+      name = section.name?
+      @h_sections["0"] = section
+      
+      require 'bim-tools/ui/clsWallsFromEdges.rb'
+      section = ClsWallsFromEdges.new(self, "1")
+      name = section.name?
+      @h_sections["1"] = section
+      
+      require 'bim-tools/ui/dlgSecPlanarsFromFaces.rb'
+      section = ClsDlgSecPlanarsFromFaces.new(self, "2")
+      name = section.name?
+      @h_sections["2"] = section
+      
+      require 'bim-tools/ui/dlgSecProjectData.rb'
+      section = ClsDlgSecProjectData.new(self, "3")
+      name = section.name?
+      @h_sections["3"] = section
+      
+      require 'bim-tools/ui/clsIfcExport.rb'
+      section = UiIfcExport.new(self, "4")
+      name = section.name?
+      @h_sections["4"] = section
+      
+      #@h_sections["ProjectData"] = ClsProjectData.new
+      
       @dialog.set_html( html )
-    }
-  end
-  def webdialog
-    return @dialog
-  end
-  def close
-    if @dialog.visible?
-      @dialog.close
+      self.show
+      
+      # Attach the observer.
+      Sketchup.active_model.selection.add_observer(MySelectionObserver.new(@project, self, @h_sections))
+      
+    end
+    def show
+      MAC ? @dialog.show_modal() : @dialog.show()
+      # return nil
+    end
+    def refresh
+      @dialog.set_html( html )
+    end
+    def callback
+      self.webdialog.add_action_callback("cmd_bimtools") {|dialog, params|
+        self.close
+      }
+      self.webdialog.add_action_callback("cmd_toggle_geometry") {|dialog, params|
+        @project.toggle_geometry()
+      }
+      self.webdialog.add_action_callback("cmd_clear") {|dialog, params|
+        require "bim-tools/tools/clear_properties.rb"
+        selection = Sketchup.active_model.selection
+        ClearProperties.new(@project, selection)
+      }
+    end
+    def html
+      content = ""
+      @h_sections.each do |id, section|
+        content = content + section.html + "<hr />"
+      end
+      return html_top + content + html_bottom
+    end
+    def html_top
+      return "
+      <!DOCTYPE html>
+      <html>
+      <head>
+      <meta charset=utf-8'>
+      <title>BIM-Tools - webdialog</title>
+      <link href='" + @pathname + "/bt_dialog.css' rel='stylesheet' type='text/css' />
+      <style type='text/css'> h1 {background-image: url(" + @imagepath + "minimize.png)}</style>
+      </head>
+      <body>
+      <ul>
+      <li><a href='skp:cmd_bimtools@true'><img src='" + self.imagepath + "bimtools_large.png' /></a></li>
+      <li><a href='skp:cmd_toggle_geometry@true'><img src='" + self.imagepath + "ToggleGeometry_large.png' /></a></li>
+      <li><a href='skp:cmd_clear@true'><img src='" + self.imagepath + "clear_large.png' /></a></li>
+      </ul>
+      <hr />
+      "
+    end
+    def html_bottom
+      return "
+      </body>
+      </html>
+      "
+    end
+    
+    #action to be started on webdialog minimize/maximize
+    def min_max
+      @dialog.add_action_callback("min_max") {|dialog, params|
+  
+        #split string into separate values
+        values =  params.split("=")
+        section = values[0]
+        max = values[1]
+        if max == "true"
+          @h_sections[section].maximize
+        else
+          @h_sections[section].minimize
+        end
+        @dialog.set_html( html )
+      }
+    end
+    def webdialog
+      return @dialog
+    end
+    def close
+      if @dialog.visible?
+        @dialog.close
+      end
+    end
+    def selection
+      return @selection
+    end
+    def imagepath
+      return @imagepath
+    end
+    def project
+      return @project
+    end  # This is an example of an observer that watches the selection for changes.
+    class MySelectionObserver < Sketchup::SelectionObserver
+      def initialize(project, bt_dialog, h_sections)
+        @project = project
+        @bt_dialog = bt_dialog
+        #@entityInfo = entityInfo
+        #@wallsfromedges = wallsfromedges
+        @h_sections = h_sections
+      end
+      def onSelectionBulkChange(selection)
+        # open menu entity_info als de selectie wijzigt
+        #js_command = "entity_info(1)"
+        #@dialog.execute_script(js_command)
+  
+        
+        #js_command = 'entity_info_width("' + width.to_s + '")'
+        #@dialog.execute_script(js_command)
+        #@entityInfo.update(selection)
+        #@wallsfromedges.update(selection)
+        
+        @h_sections.each_value do |section|
+          section.update(selection)
+        end
+        
+        #@bt_dialog.webdialog.set_html( @bt_dialog.html )
+      end
+      def onSelectionCleared(selection)
+        #@entityInfo.update(selection)
+        #@wallsfromedges.update(selection)
+        
+              
+        @h_sections.each_value do |section|
+          section.update(selection)
+        end
+        
+        #@bt_dialog.webdialog.set_html( @bt_dialog.html )
+      end
     end
   end
-  def selection
-    return @selection
-  end
-  def imagepath
-    return @imagepath
-  end
-  def project
-    return @project
-  end  # This is an example of an observer that watches the selection for changes.
-  class MySelectionObserver < Sketchup::SelectionObserver
-    def initialize(project, bt_dialog, h_sections)
-			@project = project
-			@bt_dialog = bt_dialog
-			#@entityInfo = entityInfo
-      #@wallsfromedges = wallsfromedges
-      @h_sections = h_sections
-		end
-		def onSelectionBulkChange(selection)
-			# open menu entity_info als de selectie wijzigt
-			#js_command = "entity_info(1)"
-			#@dialog.execute_script(js_command)
 
-			
-			#js_command = 'entity_info_width("' + width.to_s + '")'
-			#@dialog.execute_script(js_command)
-			#@entityInfo.update(selection)
-			#@wallsfromedges.update(selection)
-      
-      @h_sections.each_value do |section|
-        section.update(selection)
-      end
-      
-			#@bt_dialog.webdialog.set_html( @bt_dialog.html )
-		end
-		def onSelectionCleared(selection)
-			#@entityInfo.update(selection)
-			#@wallsfromedges.update(selection)
-      
-            
-      @h_sections.each_value do |section|
-        section.update(selection)
-      end
-      
-			#@bt_dialog.webdialog.set_html( @bt_dialog.html )
-		end
-	end
 end
