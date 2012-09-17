@@ -15,12 +15,15 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-MAC = ( Object::RUBY_PLATFORM =~ /(darwin)/i ? true : false )
-OSX = MAC unless defined?(OSX)
-WIN = ( not MAC ) unless defined?(WIN)
-PC = WIN unless defined?(PC)
+module Brewsky::BimTools
 
-# Create a basic bim-tools object 
-require 'bim-tools/clsBimTools.rb'
-ClsBimTools.new
+  MAC = ( Object::RUBY_PLATFORM =~ /(darwin)/i ? true : false )
+  OSX = MAC unless defined?(OSX)
+  WIN = ( not MAC ) unless defined?(WIN)
+  PC = WIN unless defined?(PC)
+  
+  # Create a basic bim-tools object 
+  require 'bim-tools/clsBimTools.rb'
+  ClsBimTools.new
 
+end
