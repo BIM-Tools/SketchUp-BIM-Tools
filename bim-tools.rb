@@ -26,6 +26,8 @@
 # ifc materials(layers)
 
 # Changelog:
+# 120918 Fixed ifc export of wall properties
+# 120917 Fixed links between ifcproject / ifcsite / ifcbuilding / building objects
 # 120916 Fixed saving + exporting of project data
 # 120717 Re-implemented basic IFC export(IfcPlate elements only)
 # 120603 Added top menu to webdialog

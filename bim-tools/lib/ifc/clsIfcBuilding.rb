@@ -103,8 +103,8 @@ module Brewsky::BimTools
       # define openings
       openings
       
-      #add self to the list of entities contained in the site
-      @ifc_exporter.add_to_site(self)
+      #add self to the list of entities contained in the building
+      @ifc_exporter.add_to_building(self)
     end
     def set_representations
       # Ifcplate has 2 or more representations, 
@@ -167,11 +167,11 @@ module Brewsky::BimTools
       
       set_BaseQuantities
       
-      #add self to the list of entities contained in the site
-      @ifc_exporter.add_to_site(self)
+      #add self to the list of entities contained in the building
+      @ifc_exporter.add_to_building(self)
     end
     def set_BaseQuantities
-      aRelatedObjects = [record_nr]
+      aRelatedObjects = [self.record_nr]
       IfcRelDefinesByProperties.new(@ifc_exporter, @planar, aRelatedObjects)
     end
   end
@@ -291,8 +291,8 @@ module Brewsky::BimTools
       
       set_BaseQuantities
       
-      #add self to the list of entities contained in the site
-      @ifc_exporter.add_to_site(self)
+      #add self to the list of entities contained in the building
+      @ifc_exporter.add_to_building(self)
     end
     def set_objectPlacement(bt_entity)
       
@@ -435,11 +435,6 @@ module Brewsky::BimTools
       set_latlong
       
       @ifc_exporter.add(self)
-      
-      # create a building on the site, temporary solution because multiple buildings could be present
-      IfcBuilding.new(@ifc_exporter).record_nr
-      # TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      #42 = IFCRELAGGREGATES('1_M0EvY2z24AX0l7nBeVj1', #2, 'SiteContainer', 'SiteContainer For Buildings', #23, (#29));
       
       # "local" IFC array
       @a_Attributes = Array.new
@@ -589,8 +584,8 @@ module Brewsky::BimTools
       # define openings
       openings
       
-      #add self to the list of entities contained in the site
-      @ifc_exporter.add_to_site(self)
+      #add self to the list of entities contained in the building
+      @ifc_exporter.add_to_building(self)
     end
     def ifcSlabTypeEnum(planar)
       # Return options: FLOOR, ROOF, LANDING, BASESLAB, USERDEFINED, NOTDEFINED
@@ -698,10 +693,10 @@ module Brewsky::BimTools
       @a_Attributes = Array.new
       @a_Attributes << "'" + @ifc_exporter.project.new_guid + "'"
       @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr
-      @a_Attributes << "'SiteContainer'" # only correct for site!!!
-      @a_Attributes << "'Contents of Site'" # only correct for site!!!
-      @a_Attributes << @ifc_exporter.ifcList(@ifc_exporter.aContainedInSite)
-      @a_Attributes << @ifc_exporter.ifcSite.record_nr
+      @a_Attributes << "'BuildingContainer'" # only correct for site!!!
+      @a_Attributes << "'Contents of Building'" # only correct for site!!!
+      @a_Attributes << @ifc_exporter.ifcList(@ifc_exporter.aContainedInBuilding)
+      @a_Attributes << @ifc_exporter.ifcBuilding.record_nr
     end
   end
   

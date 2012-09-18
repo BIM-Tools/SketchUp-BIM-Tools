@@ -24,7 +24,7 @@ module Brewsky::BimTools
   
   # basic IFC export class
   class IfcExporter
-    attr_reader :a_Ifc, :ifcProject, :ifcOrganisation, :project, :ifcOwnerHistory, :ifcGeometricRepresentationContext, :ifcSite, :aContainedInSite
+    attr_reader :a_Ifc, :ifcProject, :ifcOrganisation, :project, :ifcOwnerHistory, :ifcGeometricRepresentationContext, :ifcSite, :ifcBuilding, :aContainedInBuilding
     def initialize(project, selection=nil)
       @model=Sketchup.active_model
       @project = project
@@ -33,13 +33,15 @@ module Brewsky::BimTools
       @a_Ifc = Array.new
       
       # This array will hold the record numbers of all entities that are direct "child" objects to the site
-      @aContainedInSite = Array.new
+      @aContainedInBuilding = Array.new
       
       # create IfcProject object
       set_IfcProject
       
       # create IfcSite object
-      set_IfcSite
+      set_IfcSite(@ifcProject)
+      
+      set_IfcBuilding(@ifcSite)
   
       path=@model.path.tr("\\", "/")
       if not path or path==""
@@ -127,15 +129,31 @@ module Brewsky::BimTools
       return @ifcGeometricRepresentationContext
     end
     
-    def set_IfcSite()
+    def set_IfcSite(project)
       if @ifcSite.nil?
         @ifcSite = IfcSite.new(self)
+        # IFCRELAGGREGATES('1hGct2v1LFjuexLy7xe$Mo', #2, 'ProjectContainer', 'ProjectContainer for Sites', #1, (#23));
+        name = "'ProjectContainer'"
+        description = "'ProjectContainer for Sites'"
+        IfcRelAggregates.new(self, name, description, project, @ifcSite)
       end
       return @ifcSite
     end
     
-    def add_to_site(ifc_entity)
-      @aContainedInSite << ifc_entity.record_nr
+    # create a building on the site, temporary solution because multiple buildings could be present
+    def set_IfcBuilding(site)
+      if @ifcBuilding.nil?
+        @ifcBuilding = IfcBuilding.new(self)
+        # IFCRELAGGREGATES('1_M0EvY2z24AX0l7nBeVj1', #2, 'SiteContainer', 'SiteContainer For Buildings', #23, (#29));
+        name = "'SiteContainer'"
+        description = "'SiteContainer For Buildings'"
+        IfcRelAggregates.new(self, name, description, site, @ifcBuilding)
+      end
+      return @ifcBuilding
+    end
+    
+    def add_to_building(ifc_entity)
+      @aContainedInBuilding << ifc_entity.record_nr
     end
     
     # returns a string containing the full IFC file
@@ -157,18 +175,18 @@ module Brewsky::BimTools
     end
     def header
       return "ISO-10303-21;
-  HEADER;
-  FILE_DESCRIPTION (('ViewDefinition [CoordinationView]'), '2;1');
-  FILE_NAME ('test.ifc', '2011-01-01T11:11:11', ('Architect'), ('Building Designer Office'), 'BIM-Tools', 'example', 'The authorising person');
-  FILE_SCHEMA (('IFC2X3'));
-  ENDSEC;
-  DATA;
-  "
+HEADER;
+FILE_DESCRIPTION (('ViewDefinition [CoordinationView]'), '2;1');
+FILE_NAME ('test.ifc', '2011-01-01T11:11:11', ('Architect'), ('Building Designer Office'), 'BIM-Tools', 'example', 'The authorising person');
+FILE_SCHEMA (('IFC2X3'));
+ENDSEC;
+DATA;
+"
     end
     def footer
       return "ENDSEC;
-  END-ISO-10303-21;
-  "
+END-ISO-10303-21;
+"
     end
   
     # returns a length converted to m, as a string
@@ -199,32 +217,36 @@ module Brewsky::BimTools
     # returns a IFC list-string out of an array
     def ifcList(aList)
       sList = "("
-      aList.each_index do |index|
-        sList = sList + aList[index]
-        unless aList.length - 1 == index
-          sList = sList + ","
+      if aList.is_a? Array
+        aList.each_index do |index|
+          sList = sList + aList[index]
+          unless aList.length - 1 == index
+            sList = sList + ","
+          end
         end
+      else
+        sList = sList + aList
       end
       sList = sList + ")"
       return sList
     end
   end
   
-  class IfcHeader
-    attr_accessor :header, :footer
-    def initialize
-      @header = "ISO-10303-21;
-  HEADER;
-  FILE_DESCRIPTION (('ViewDefinition [CoordinationView]'), '2;1');
-  FILE_NAME ('test.ifc', '2011-01-01T11:11:11', ('Architect'), ('Building Designer Office'), 'BIM-Tools', 'example', 'The authorising person');
-  FILE_SCHEMA (('IFC2X3'));
-  ENDSEC;
-  DATA;
-  "
-      @footer = "ENDSEC;
-  END-ISO-10303-21;
-  "
-    end
-  end
+#  class IfcHeader
+#    attr_accessor :header, :footer
+#    def initialize
+#      @header = "ISO-10303-21;
+#HEADER;
+#FILE_DESCRIPTION (('ViewDefinition [CoordinationView]'), '2;1');
+#FILE_NAME ('test.ifc', '2011-01-01T11:11:11', ('Architect'), ('Building Designer Office'), 'BIM-Tools', 'example', 'The authorising person');
+#FILE_SCHEMA (('IFC2X3'));
+#ENDSEC;
+#DATA;
+#"
+#      @footer = "ENDSEC;
+#END-ISO-10303-21;
+#"
+#    end
+#  end
 
 end
