@@ -126,10 +126,14 @@ module Brewsky::BimTools
       if entity.nil?
           @name = "$"
       else
-        if entity.name?.nil? || entity.name? == ""
-          @name = "$"
+        if entity.is_a? String || entity == ""
+          @name = entity
         else
-          @name = entity.name?
+          if entity.name?.nil? || entity.name? == ""
+            @name = "$"
+          else
+            @name = entity.name?
+          end
         end
       end
       return @name
@@ -138,10 +142,14 @@ module Brewsky::BimTools
       if entity.nil?
           @description = "$"
       else
-        if entity.description?.nil? || entity.description? == ""
-          @description = "$"
+        if entity.is_a? String || entity == ""
+          @description = entity
         else
-          @description = entity.description?
+          if entity.description?.nil? || entity.description? == ""
+            @description = "$"
+          else
+            @description = entity.description?
+          end
         end
       end
       return @description
@@ -190,10 +198,7 @@ module Brewsky::BimTools
       ifcUnitAssignment = IfcUnitAssignment.new(@ifc_exporter)
       aIfcGeometricRepresentationContext = Array.new
       aIfcGeometricRepresentationContext << @ifc_exporter.set_IfcGeometricRepresentationContext.record_nr#IfcGeometricRepresentationContext.new(@ifc_exporter, @project).record_nr
-            
-      # TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      #43 = IFCRELAGGREGATES('1hGct2v1LFjuexLy7xe$Mo', #2, 'ProjectContainer', 'ProjectContainer for Sites', #1, (#23));
-      
+
       # "local" IFC array
       @a_Attributes = Array.new
       @a_Attributes << "'" + @project.guid + "'"
@@ -351,6 +356,35 @@ module Brewsky::BimTools
       @a_Attributes << "'0.11.0'"
       @a_Attributes << "'BIM-Tools for SketchUp'"
       @a_Attributes << "'BIM-Tools'"
+    end
+  end
+  
+  
+  # IFCRELAGGREGATES('1_M0EvY2z24AX0l7nBeVj1', #2, 'SiteContainer', 'SiteContainer For Buildings', #23, (#29));
+  class IfcRelAggregates < IfcRoot
+    # Attribute	      Type	                              Defined By
+    # GlobalId	      IfcGloballyUniqueId (STRING)	      IfcRoot
+    # OwnerHistory	  IfcOwnerHistory (ENTITY)	          IfcRoot
+    # Name	          IfcLabel (STRING)	                  IfcRoot
+    # Description	    IfcText (STRING)	                  IfcRoot
+    # RelatingObject	IfcObjectDefinition (ENTITY)	      IfcRelDecomposes
+    # RelatedObjects	SET OF IfcObjectDefinition (ENTITY)	IfcRelDecomposes
+    attr_accessor :record_nr
+        #IfcRelAggregates.new(self, name, description, site, @ifcBuilding)
+    def initialize(ifc_exporter, name, description, relating, related)
+      @ifc_exporter = ifc_exporter
+      @project = ifc_exporter.project
+      @entityType = "IFCRELAGGREGATES"
+      @ifc_exporter.add(self)
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << set_globalId
+      @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr
+      @a_Attributes << set_name(name)
+      @a_Attributes << set_description(description)
+      @a_Attributes << relating.record_nr
+      @a_Attributes << @ifc_exporter.ifcList(related.record_nr)
     end
   end
 
