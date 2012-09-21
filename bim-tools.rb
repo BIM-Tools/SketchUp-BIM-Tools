@@ -26,6 +26,7 @@
 # ifc materials(layers)
 
 # Changelog:
+# 120920 IFC export walls added 2dCurve representation
 # 120918 Fixed ifc export of wall properties
 # 120917 Fixed links between ifcproject / ifcsite / ifcbuilding / building objects
 # 120916 Fixed saving + exporting of project data

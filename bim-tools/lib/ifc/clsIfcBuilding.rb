@@ -319,10 +319,17 @@ module Brewsky::BimTools
     end
     def set_representations
       aRepresentations = Array.new
+      aCurve2d = Array.new
+      aPath = Array.new
+      aPath << Geom::Point3d.new(0,0,0)
+      aPath << Geom::Point3d.new(@planar.length?,0,0)
       aSweptSolid = Array.new
       projection = get_projection(@planar)
       loop = projection
+      aCurve2d << IfcPolyline.new(@ifc_exporter, @planar, aPath, false).record_nr
       aSweptSolid << WscIfcExtrudedAreaSolid.new(@ifc_exporter, @planar, loop, @planar.height?).record_nr
+#201= IFCSHAPEREPRESENTATION(#51,'Axis','Curve2D',(#197));
+      aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Axis'", "'Curve2D'", aCurve2d).record_nr # SweptSolid Representation
       aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
       #group.erase!
       return IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)

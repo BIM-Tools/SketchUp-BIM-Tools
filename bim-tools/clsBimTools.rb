@@ -15,14 +15,16 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# BimTools initialisation class
-class ClsBimTools
-  def initialize
-	require "bim-tools/clsBtProject.rb"
-	require "bim-tools/ui/clsBtUi.rb"
-    project = ClsBtProject.new # create a new project
-    ClsBtUi.new(project) # start all UI elements: webdialog (?toolbar?)
+module Brewsky::BimTools
+  # BimTools initialisation class
+  class ClsBimTools
+    def initialize
+    require 'bim-tools/clsBtProject.rb'
+    require 'bim-tools/ui/clsBtUi.rb'
+      project = ClsBtProject.new # create a new project
+      ClsBtUi.new(project) # start all UI elements: webdialog (?toolbar?)
+    end
+    # is it possible to completely “unload” the plugin during a session?
+    # def destructor
   end
-  # is it possible to completely “unload” the plugin during a session?
-  # def destructor
 end

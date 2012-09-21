@@ -112,7 +112,7 @@ module Brewsky::BimTools
   
   class IfcPolyline < IfcBase
     attr_accessor :record_nr, :entityType
-    def initialize(ifc_exporter, bt_entity, loop)
+    def initialize(ifc_exporter, bt_entity, loop, closed=true)
       @ifc_exporter = ifc_exporter
       @bt_entity = bt_entity
       @loop = loop
@@ -132,8 +132,11 @@ module Brewsky::BimTools
         ifcCartesianPoint = IfcCartesianPoint.new(@ifc_exporter, position)
         pts << ifcCartesianPoint.record_nr
       end
-      #endpoint
-      pts << pts[0]
+
+      #add endpoint, only complete loop for a closed curve, not an open curve
+      if closed == true
+        pts << pts[0]
+      end
       @a_Attributes << @ifc_exporter.ifcList(pts)
     end
   end
