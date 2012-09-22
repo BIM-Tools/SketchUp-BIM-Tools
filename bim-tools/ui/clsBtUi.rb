@@ -19,12 +19,11 @@ module Brewsky::BimTools
 
   # Class BIM-Tools UI: manages UI elements
   class ClsBtUi
-    def initialize(bim_tools)
-      @bim_tools = bim_tools
+    def initialize(bimTools)
       
       # create BIM-Tools toolbar
       require "bim-tools/ui/toolbar.rb"
-      BtToolbar.new(@bim_tools)
+      BtToolbar.new(bimTools)
     end
   end
   

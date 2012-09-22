@@ -18,7 +18,9 @@
 module Brewsky::BimTools
 
   class BtToolbar
-    def initialize(bim_tools)
+    def initialize(bimTools)
+      
+      @bimTools = bimTools
       bt_toolbar = UI::Toolbar.new "BIM-Tools"
       @active_model = Sketchup.active_model
       
@@ -26,21 +28,25 @@ module Brewsky::BimTools
   
   
         # dialog on close not nil but just not visible better? and not re-create but just make visible?
-        if @dialog == nil
-          require 'bim-tools/ui/bt_dialog.rb'
-          @dialog = Bt_dialog.new(bim_tools)
-          bim_tools.dialog = @dialog
-        else
-          #if the webdialog is closed using the X-button, the dialog value will be nil
-          if @dialog.dialog.nil?
-            require 'bim-tools/ui/bt_dialog.rb'
-            @dialog = Bt_dialog.new(bim_tools)
-            bim_tools.dialog = @dialog
-          else
-            @dialog.close
-            @dialog = nil
-          end
-        end
+        #if @dialog.nil?
+        #  require 'bim-tools/ui/bt_dialog.rb'
+        #  @dialog = Bt_dialog.new(bimTools)
+        #  #bim_tools.dialog = @dialog
+        #else
+        #  #if the webdialog is closed using the X-button, the dialog value will be nil
+        #  if @dialog.dialog.nil?
+        #    require 'bim-tools/ui/bt_dialog.rb'
+        #    @dialog = Bt_dialog.new(bimTools)
+        #    #bim_tools.dialog = @dialog
+        #  else
+        #    @dialog.close
+        #    @dialog = nil
+        #  end
+        #end
+        
+        # switch dialog visibility
+        @bimTools.btDialog.toggle
+        
       }
   
       cmd_planar_from_selection = UI::Command.new("Creates building elements from selected faces") {
@@ -48,7 +54,7 @@ module Brewsky::BimTools
         if selection.length > 0
           require "bim-tools/tools/planar_from_faces.rb"
           
-          planar_from_faces = PlanarFromFaces.new(bim_tools, selection)
+          planar_from_faces = PlanarFromFaces.new(@bimTools.active_BtProject, selection)
           Sketchup.active_model.select_tool planar_from_faces
           
           #planar_from_faces(@project, selection)
@@ -57,14 +63,14 @@ module Brewsky::BimTools
       
       # switch between source and geometry visibility
       cmd_toggle_geometry = UI::Command.new("Toggle between sources and geometry") {
-        bim_tools.toggle_geometry()
+        @bimTools.active_BtProject.toggle_geometry()
       }
       
       # Remove BIM properties from selection
       cmd_clear = UI::Command.new("Remove BIM properties from selection") {
         require "bim-tools/tools/clear_properties.rb"
         selection = Sketchup.active_model.selection
-        ClearProperties.new(bim_tools, selection)
+        ClearProperties.new(@bimTools.active_BtProject, selection)
       }
   
       cmd_bimtools.small_icon = "../images/bimtools_small.png"

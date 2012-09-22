@@ -18,13 +18,105 @@
 module Brewsky::BimTools
   # BimTools initialisation class
   class ClsBimTools
+    attr_reader :aBtProjects, :btDialog
+
     def initialize
-    require 'bim-tools/clsBtProject.rb'
-    require 'bim-tools/ui/clsBtUi.rb'
-      project = ClsBtProject.new # create a new project
-      ClsBtUi.new(project) # start all UI elements: webdialog (?toolbar?)
+      require 'bim-tools/clsBtProject.rb'
+      require 'bim-tools/ui/clsBtUi.rb'
+      
+      @aBtProjects = Array.new
+      new_BtProject
+      
+      require 'bim-tools/ui/bt_dialog.rb'
+      @btDialog = Bt_dialog.new(self)
+      
+      ClsBtUi.new(self) # start all UI elements: webdialog (?toolbar?)
+      
+     # Attach the observer
+     Sketchup.add_observer(BtAppObserver.new(self))
+     
+    end
+    def active_BtProject
+      @aBtProjects.each do |btProject|
+        if btProject.model == Sketchup.active_model
+          return btProject
+        end
+      end
+    end
+   # def set_btDialog(btDialog)
+
+    #end
+    #def add_BtProject(btProject)
+    #  @aBtProjects << btProject
+    #end
+    def new_BtProject
+      btProject = ClsBtProject.new
+      @aBtProjects << btProject
+    
+      # Attach selection observer to the new model.
+      Sketchup.active_model.selection.add_observer(MySelectionObserver.new(btProject, self))
     end
     # is it possible to completely “unload” the plugin during a session?
     # def destructor
   end
+  
+  # This observer creates additional BtProjects when new/additional models are activated
+  class BtAppObserver < Sketchup::AppObserver
+    def initialize(bimTools)
+      @bimTools = bimTools
+    end
+    def onNewModel(model)
+      @bimTools.new_BtProject
+    end
+    def onOpenModel(model)
+      @bimTools.new_BtProject
+    end
+  end
+  class MySelectionObserver < Sketchup::SelectionObserver
+      def initialize(project, bimTools)#bt_dialog, h_sections)
+        @project = project
+        @bimTools = bimTools
+        # UI.messagebox("@project: " + @project.to_s)
+        #@bt_dialog = bimTools.btDialog
+        # UI.messagebox("@bt_dialog: " + @bt_dialog.to_s)
+        #@entityInfo = entityInfo
+        #@wallsfromedges = wallsfromedges
+        #@h_sections = bimTools.btDialog.h_sections
+      end
+      def onSelectionBulkChange(selection)
+        # open menu entity_info als de selectie wijzigt
+        #js_command = "entity_info(1)"
+        #@dialog.execute_script(js_command)
+  
+        
+        #js_command = 'entity_info_width("' + width.to_s + '")'
+        #@dialog.execute_script(js_command)
+        #@entityInfo.update(selection)
+        #@wallsfromedges.update(selection)
+        
+        unless @bimTools.btDialog.nil?
+          @bimTools.btDialog.update_sections(selection)
+        end
+        puts @project.library.entities.length
+        #@h_sections.each_value do |section|
+        #  section.update(selection)
+        #end
+        
+        #@bt_dialog.webdialog.set_html( @bt_dialog.html )
+      end
+      def onSelectionCleared(selection)
+        #@entityInfo.update(selection)
+        #@wallsfromedges.update(selection)
+        
+        unless @bimTools.btDialog.nil?
+          @bimTools.btDialog.update_sections(selection)
+        end
+        #@h_sections.each_value do |section|
+        #  section.update(selection)
+        #end
+        
+        #@bt_dialog.webdialog.set_html( @bt_dialog.html )
+      end
+  end
+
 end
