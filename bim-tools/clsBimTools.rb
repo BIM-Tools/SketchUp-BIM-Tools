@@ -84,38 +84,16 @@ module Brewsky::BimTools
         #@h_sections = bimTools.btDialog.h_sections
       end
       def onSelectionBulkChange(selection)
+      
         # open menu entity_info als de selectie wijzigt
-        #js_command = "entity_info(1)"
-        #@dialog.execute_script(js_command)
-  
-        
-        #js_command = 'entity_info_width("' + width.to_s + '")'
-        #@dialog.execute_script(js_command)
-        #@entityInfo.update(selection)
-        #@wallsfromedges.update(selection)
-        
         unless @bimTools.btDialog.nil?
           @bimTools.btDialog.update_sections(selection)
         end
-        puts @project.library.entities.length
-        #@h_sections.each_value do |section|
-        #  section.update(selection)
-        #end
-        
-        #@bt_dialog.webdialog.set_html( @bt_dialog.html )
       end
       def onSelectionCleared(selection)
-        #@entityInfo.update(selection)
-        #@wallsfromedges.update(selection)
-        
         unless @bimTools.btDialog.nil?
           @bimTools.btDialog.update_sections(selection)
         end
-        #@h_sections.each_value do |section|
-        #  section.update(selection)
-        #end
-        
-        #@bt_dialog.webdialog.set_html( @bt_dialog.html )
       end
   end
 

@@ -20,14 +20,14 @@ module Brewsky::BimTools
   class Bt_dialog
     attr_reader :dialog#, :h_sections
     
-    def initialize(bimTools)
+    def initialize(bimTools, visible=false)
       #bimTools.set_btDialog(self)
 
       @bimTools = bimTools
       #@project = @bimTools.active_BtProject
       #bt_lib = @project.library
   
-      open
+      new_webdialog
       
       @pathname = File.expand_path( File.dirname(__FILE__) )
       mainpath = @pathname.split('ui')[0]
@@ -76,8 +76,9 @@ module Brewsky::BimTools
       #@h_sections["ProjectData"] = ClsProjectData.new
       
       @dialog.set_html( html )
-      self.show
-      
+      if visible == true
+        open
+      end
       # Attach the observer.
       #Sketchup.active_model.selection.add_observer(MySelectionObserver.new(@project, self, @h_sections))
       return self
@@ -173,16 +174,20 @@ module Brewsky::BimTools
     def webdialog
       return @dialog
     end
+    def new_webdialog
+    
+      # Create WebDialog instance, patched for OSX
+      require 'bim-tools/lib/WebdialogPatch.rb'
+      @dialog = WebDialogPatch.new("BIM-Tools menu", false, "bim-tools", 243, 320, 150, 150, true)
+  
+      # Create WebDialog instance
+      # @dialog = UI::WebDialog.new("BIM-Tools menu")
+      @dialog.min_width= 243
+      @dialog.max_width= 243
+    end
     def open
       if @dialog.nil?
-        # Create WebDialog instance, patched for OSX
-        require 'bim-tools/lib/WebdialogPatch.rb'
-        @dialog = WebDialogPatch.new("BIM-Tools menu", false, "bim-tools", 243, 320, 150, 150, true)
-    
-        # Create WebDialog instance
-        # @dialog = UI::WebDialog.new("BIM-Tools menu")
-        @dialog.min_width= 243
-        @dialog.max_width= 243
+        new_webdialog
       end
       unless @dialog.visible?
         show
