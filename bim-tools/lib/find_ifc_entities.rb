@@ -61,7 +61,6 @@ module Brewsky::BimTools
         #  @h_guid_list[guid] = Array.new
         #  @h_guid_list[guid] << ent
         #end
-      puts "ent"
         if ent.is_a?(Sketchup::Group)
           if @lib.geometry_to_bt_entity(@project, ent).nil?
             ### add_bt_entity(ent)
@@ -110,12 +109,14 @@ module Brewsky::BimTools
         else
           unless guid[1][0].nil? || guid[1][1].nil?
             require "bim-tools/lib/clsPlanarElement.rb"
-            planar = ClsPlanarElement.new(@project, guid[1][0])
-            planar.geometry=(guid[1][1])
             width = guid[1][1].get_attribute "ifc", "width"
-            planar.width= width.to_l.to_mm
+            width = width.to_l.to_mm
             offset = guid[1][1].get_attribute "ifc", "offset"
-            planar.offset= offset.to_l.to_mm
+            offset = offset.to_l.to_mm
+            planar = ClsPlanarElement.new(@project, guid[1][0], width, offset, guid[0])
+            planar.geometry=(guid[1][1])
+            #planar.width= width.to_l.to_mm
+            #planar.offset= offset.to_l.to_mm
             planar.name= guid[1][1].get_attribute "ifc", "name"
             planar.description= guid[1][1].get_attribute "ifc", "description"
             planar.element_type= guid[1][1].get_attribute "ifc", "type"

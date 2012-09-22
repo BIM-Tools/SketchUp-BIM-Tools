@@ -21,11 +21,12 @@
 # roadmap 0.12:
 # fix side-faces normal direction in openings
 # fix project properties(different way of reading/writing properties? one at a time instead of array?)
-# fix double click to re-open dialog
-# fix multiple models for mac
 # ifc materials(layers)
 
 # Changelog:
+# 120922 fixed double click to re-open dialog
+# 120922 fixed multiple models for mac(hopefully)
+# 120922 Greatly improved opening and switching of models and hopefully multiple models for mac
 # 120920 IFC export walls added 2dCurve representation
 # 120918 Fixed ifc export of wall properties
 # 120917 Fixed links between ifcproject / ifcsite / ifcbuilding / building objects

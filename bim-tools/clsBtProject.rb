@@ -286,25 +286,20 @@ module Brewsky::BimTools
     def source_recovery
       @model = Sketchup.active_model
       @entities = @model.entities
-      #puts "source recovery started!"
       h_guid = Hash.new
       #a_faces = Array.new
       #a_faces = get_all_faces(@entities, Array.new)
       a_faces = get_active_faces
-      #puts a_faces.length
       a_faces.each do |face|
         if face.get_attribute "ifc", "guid"
-          #puts "GUID found!"
           bt_entity = @lib.source_to_bt_entity(self, face)
           if bt_entity.nil?
             guid = face.get_attribute "ifc", "guid"
             if h_guid.has_key?(guid)
               h_guid[guid] << face
-              #puts face
             else
               h_guid[guid] = Array.new
               h_guid[guid] << face
-              #puts face
             end
           end
         end
@@ -340,9 +335,9 @@ module Brewsky::BimTools
               planar = ClsPlanarElement.new(self, face)
               planar.set_properties(props)
               planar.set_geometry
-              @lib.entities do |ent|
-                puts ent.width
-              end
+              #@lib.entities do |ent|
+              #  puts ent.width
+              #end
             end
           end
         end

@@ -23,7 +23,7 @@ module Brewsky::BimTools
   # Object "parallel" to sketchup "face" object
   class ClsPlanarElement < ClsBuildingElement
     attr_reader :element_type, :openings
-    def initialize(project, face, width=nil, offset=nil) # profilecomponent=width, offset
+    def initialize(project, face, width=nil, offset=nil, guid=nil) # profilecomponent=width, offset
       @project = project
       @source = face
       @deleted = false
@@ -36,7 +36,7 @@ module Brewsky::BimTools
       @element_type
       @name
       @description
-      @guid
+      @guid = guid
       @length
       @height
       if width.nil?
@@ -52,7 +52,9 @@ module Brewsky::BimTools
     
       init_type
       add_to_lib
-      set_guid
+      if @guid.nil?
+        set_guid
+      end
       set_attributes
       set_planes
       #a_set_geometry = Array[self]

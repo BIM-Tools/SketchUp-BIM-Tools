@@ -21,7 +21,6 @@ module Brewsky::BimTools
   
   class ClsEntityInfo < ClsDialogSection
     def initialize(dialog, id)
-         UI.messagebox("@bt_dialog2: " + dialog.to_s)
       @dialog = dialog
       @id = id.to_s
       @project = dialog.project
