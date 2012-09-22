@@ -18,33 +18,28 @@
 module Brewsky::BimTools
 
   class Bt_dialog
-    attr_reader :dialog
+    attr_reader :dialog#, :h_sections
     
-    def initialize(project)
-    
-      @project = project
-      bt_lib = @project.library
+    def initialize(bimTools)
+      #bimTools.set_btDialog(self)
+
+      @bimTools = bimTools
+      #@project = @bimTools.active_BtProject
+      #bt_lib = @project.library
   
-      # Create WebDialog instance, patched for OSX
-      require 'bim-tools/lib/WebdialogPatch.rb'
-      @dialog = WebDialogPatch.new("BIM-Tools menu", false, "bim-tools", 243, 320, 150, 150, true)
-  
-      # Create WebDialog instance
-      # @dialog = UI::WebDialog.new("BIM-Tools menu")
-      @dialog.min_width= 243
-      @dialog.max_width= 243
+      open
       
       @pathname = File.expand_path( File.dirname(__FILE__) )
       mainpath = @pathname.split('ui')[0]
       @imagepath = mainpath + "images/"
-      @bt_lib = bt_lib
+      #@bt_lib = bt_lib
       @javascript = ""
       
       callback
       
       # create BIM-Tools selection object
       require 'bim-tools/lib/clsBtSelection.rb'
-      @selection = ClsBtSelection.new(@project, self)
+      @selection = ClsBtSelection.new(@bimTools, self)
       
       @h_sections = Hash.new
       
@@ -84,8 +79,27 @@ module Brewsky::BimTools
       self.show
       
       # Attach the observer.
-      Sketchup.active_model.selection.add_observer(MySelectionObserver.new(@project, self, @h_sections))
-      
+      #Sketchup.active_model.selection.add_observer(MySelectionObserver.new(@project, self, @h_sections))
+      return self
+    end
+    
+    # switch dialog visibility
+    def toggle
+      if @dialog.nil?
+        open
+      else
+        if @dialog.visible?
+          close
+        else
+          open
+        end
+      end
+    end
+    def update_sections(selection)
+      @h_sections.each_value do |section|
+        section.update(selection)
+      end
+      refresh
     end
     def show
       MAC ? @dialog.show_modal() : @dialog.show()
@@ -99,12 +113,12 @@ module Brewsky::BimTools
         self.close
       }
       self.webdialog.add_action_callback("cmd_toggle_geometry") {|dialog, params|
-        @project.toggle_geometry()
+        @bimTools.active_BtProject.toggle_geometry()
       }
       self.webdialog.add_action_callback("cmd_clear") {|dialog, params|
         require "bim-tools/tools/clear_properties.rb"
         selection = Sketchup.active_model.selection
-        ClearProperties.new(@project, selection)
+        ClearProperties.new(@bimTools.active_BtProject, selection)
       }
     end
     def html
@@ -159,8 +173,23 @@ module Brewsky::BimTools
     def webdialog
       return @dialog
     end
+    def open
+      if @dialog.nil?
+        # Create WebDialog instance, patched for OSX
+        require 'bim-tools/lib/WebdialogPatch.rb'
+        @dialog = WebDialogPatch.new("BIM-Tools menu", false, "bim-tools", 243, 320, 150, 150, true)
+    
+        # Create WebDialog instance
+        # @dialog = UI::WebDialog.new("BIM-Tools menu")
+        @dialog.min_width= 243
+        @dialog.max_width= 243
+      end
+      unless @dialog.visible?
+        show
+      end
+    end
     def close
-      if @dialog.visible?
+      unless @dialog.nil?
         @dialog.close
       end
     end
@@ -171,45 +200,45 @@ module Brewsky::BimTools
       return @imagepath
     end
     def project
-      return @project
+      return @bimTools.active_BtProject
     end  # This is an example of an observer that watches the selection for changes.
-    class MySelectionObserver < Sketchup::SelectionObserver
-      def initialize(project, bt_dialog, h_sections)
-        @project = project
-        @bt_dialog = bt_dialog
-        #@entityInfo = entityInfo
-        #@wallsfromedges = wallsfromedges
-        @h_sections = h_sections
-      end
-      def onSelectionBulkChange(selection)
-        # open menu entity_info als de selectie wijzigt
-        #js_command = "entity_info(1)"
-        #@dialog.execute_script(js_command)
-  
-        
-        #js_command = 'entity_info_width("' + width.to_s + '")'
-        #@dialog.execute_script(js_command)
-        #@entityInfo.update(selection)
-        #@wallsfromedges.update(selection)
-        
-        @h_sections.each_value do |section|
-          section.update(selection)
-        end
-        
-        #@bt_dialog.webdialog.set_html( @bt_dialog.html )
-      end
-      def onSelectionCleared(selection)
-        #@entityInfo.update(selection)
-        #@wallsfromedges.update(selection)
-        
-              
-        @h_sections.each_value do |section|
-          section.update(selection)
-        end
-        
-        #@bt_dialog.webdialog.set_html( @bt_dialog.html )
-      end
-    end
+    #class MySelectionObserver < Sketchup::SelectionObserver
+    #  def initialize(project, bt_dialog, h_sections)
+    #    @project = project
+    #    @bt_dialog = bt_dialog
+    #    #@entityInfo = entityInfo
+    #    #@wallsfromedges = wallsfromedges
+    #    @h_sections = h_sections
+    #  end
+    #  def onSelectionBulkChange(selection)
+    #    # open menu entity_info als de selectie wijzigt
+    #    #js_command = "entity_info(1)"
+    #    #@dialog.execute_script(js_command)
+ # 
+ #      
+ #       #js_command = 'entity_info_width("' + width.to_s + '")'
+ #       #@dialog.execute_script(js_command)
+ #       #@entityInfo.update(selection)
+ #       #@wallsfromedges.update(selection)
+ #       
+ #       @h_sections.each_value do |section|
+ #         section.update(selection)
+ #       end
+ #       
+ #       #@bt_dialog.webdialog.set_html( @bt_dialog.html )
+ #     end
+ #     def onSelectionCleared(selection)
+ #       #@entityInfo.update(selection)
+ #       #@wallsfromedges.update(selection)
+ #       
+ #             
+ #       @h_sections.each_value do |section|
+ #         section.update(selection)
+ #       end
+ #       
+ #       #@bt_dialog.webdialog.set_html( @bt_dialog.html )
+ #     end
+ #   end
   end
 
 end

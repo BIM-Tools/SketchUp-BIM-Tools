@@ -61,6 +61,7 @@ module Brewsky::BimTools
         #  @h_guid_list[guid] = Array.new
         #  @h_guid_list[guid] << ent
         #end
+      puts "ent"
         if ent.is_a?(Sketchup::Group)
           if @lib.geometry_to_bt_entity(@project, ent).nil?
             ### add_bt_entity(ent)

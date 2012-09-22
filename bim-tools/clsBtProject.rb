@@ -25,7 +25,7 @@ module Brewsky::BimTools
     # attributes accessible from outside class
     # attr_accessor :id, :name, :description
     # when to use self.xxx?
-    attr_reader :guid, :name, :description, :site_guid, :site_name, :site_description, :building_guid, :building_name, :building_description, :author, :organisation_name, :organisation_description
+    attr_reader :model, :guid, :name, :description, :site_guid, :site_name, :site_description, :building_guid, :building_name, :building_description, :author, :organisation_name, :organisation_description
     
     def initialize(id=nil, name=nil, description=nil)
       require 'bim-tools/lib/clsDefaultValues.rb'

@@ -21,15 +21,18 @@ module Brewsky::BimTools
   # is only active as part of a webdialog???
   
   class ClsBtSelection
-    def initialize(project, dialog)
-      @project = project
+    def initialize(bimTools, dialog)
+      @bimTools = bimTools
       @dialog = dialog
       @selection = Sketchup.active_model.selection
+
+        # UI.messagebox("onViewChanged: " + bimTools.to_s)
+        # UI.messagebox("onViewChanged: " + @bimTools.active_BtProject.to_s)
     end
     
     # returns an array containing all BIM-Tools entities in the selection.
     def btEntities?
-      bt_entities = @project.library.array_remove_non_bt_entities(@project, @selection)
+      bt_entities = @bimTools.active_BtProject.library.array_remove_non_bt_entities(@bimTools.active_BtProject, @selection)
     end
     
     # returns a hash containing all properties common to the selected object
