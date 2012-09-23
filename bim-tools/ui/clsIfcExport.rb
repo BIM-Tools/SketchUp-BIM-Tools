@@ -23,6 +23,7 @@ module Brewsky::BimTools
     def initialize(dialog, id)
       @dialog = dialog
       @id = id.to_s
+      @dialog = dialog
       @project = dialog.project
       @status = false
       @name = "IfcExport"
@@ -36,7 +37,7 @@ module Brewsky::BimTools
     def callback
       @dialog.webdialog.add_action_callback(@name) {|dialog, params|
         require 'bim-tools/lib/clsIfcExport.rb'
-        exporter = IfcExporter.new(@project)
+        exporter = IfcExporter.new(@dialog.project)
       }
     end
   

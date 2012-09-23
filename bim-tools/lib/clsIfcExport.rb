@@ -28,7 +28,7 @@ module Brewsky::BimTools
     def initialize(project, selection=nil)
       @model=Sketchup.active_model
       @project = project
-      
+      puts @project
       # "total" IFC array
       @a_Ifc = Array.new
       
@@ -57,6 +57,8 @@ module Brewsky::BimTools
       aEntities = get_entities
       if aEntities.length > 0 #if exportable objects have been found, start exporter
         self.export(aEntities)
+      else
+        UI.messagebox("IFC Exporter:\n\nNo entities to export to IFC.\nExport failed.\n")
       end
     end
     def export(aEntities)
