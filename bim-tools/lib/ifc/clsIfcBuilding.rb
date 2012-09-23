@@ -255,18 +255,142 @@ module Brewsky::BimTools
       @a_Attributes << IfcElementQuantity.new(@ifc_exporter, planar).record_nr
     end
   end
+
+
+  # IFCMATERIAL('100 Leeg- Binnenblad');
+  class IfcMaterial < IfcBase
+    # Attribute	  Type	            Defined By
+    # Name	      IfcLabel (STRING)	IfcMaterial
+    # Description IfcText           IfcMaterial   OPTIONAL 2x4
+    # Category    IfcLabel          IfcMaterial   OPTIONAL 2x4
+    def initialize(ifc_exporter, material_name)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCMATERIAL"
+      ifc_exporter.add(self)
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << "'" + material_name + "'"
+    end
+  end
+
+  # IFCMATERIALLAYER(#148,100.,.U.);
+  class IfcMaterialLayer < IfcBase
+    # Attribute	      Type	                          Defined By
+    # Material	      IfcMaterial (ENTITY)	          IfcMaterialLayer
+    # LayerThickness	IfcPositiveLengthMeasure (REAL)	IfcMaterialLayer
+    # IsVentilated	  IfcLogical (LOGICAL)	          IfcMaterialLayer
+    def initialize(ifc_exporter, material_name, layerThickness)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCMATERIALLAYER"
+      ifc_exporter.add(self)
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << IfcMaterial.new(ifc_exporter, material_name).record_nr
+      @a_Attributes << layerThickness
+      @a_Attributes << ".U."
+    end
+  end
   
+  # IFCMATERIALLAYERSET((#136,#141,#146,#151),'01 Algemene BU wand iso');
+  class IfcMaterialLayerSet < IfcBase
+    # Attribute	      Type	                            Defined By
+    # MaterialLayers	LIST OF IfcMaterialLayer (ENTITY)	IfcMaterialLayerSet
+    # LayerSetName	  IfcLabel (STRING)	                IfcMaterialLayerSet
+    def initialize(ifc_exporter, aMaterialLayers, sLayerSetName)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCMATERIALLAYERSET"
+      ifc_exporter.add(self)
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << ifc_exporter.ifcList(aMaterialLayers)
+      @a_Attributes << "'" + sLayerSetName + "'"
+    end
+  end
+
+  # IFCMATERIALLAYERSETUSAGE(#153,.AXIS2.,.POSITIVE.,0.);
+  class IfcMaterialLayerSetUsage < IfcBase
+    # Attribute	              Type	                          Defined By
+    # ForLayerSet	            IfcMaterialLayerSet (ENTITY)	  IfcMaterialLayerSetUsage
+    # LayerSetDirection	      IfcLayerSetDirectionEnum (ENUM)	IfcMaterialLayerSetUsage
+    # DirectionSense	        IfcDirectionSenseEnum (ENUM)	  IfcMaterialLayerSetUsage
+    # OffsetFromReferenceLine	IfcLengthMeasure (REAL)	        IfcMaterialLayerSetUsage
+    def initialize(ifc_exporter, ifcMaterialLayerSet)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCMATERIALLAYERSETUSAGE"
+      ifc_exporter.add(self)
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << ifcMaterialLayerSet.record_nr
+      @a_Attributes << ".AXIS2."
+      @a_Attributes << ".POSITIVE."
+      @a_Attributes << "0."
+    end
+  end
+  
+  # IFCRELASSOCIATESMATERIAL('3rezN6ZsexG8ShnqMhP$g5',#13,$,$,(#170),#155);
+  class IfcRelAssociatesMaterial < IfcRoot
+    # Attribute	        Type	                        Defined By
+    # GlobalId	        IfcGloballyUniqueId (STRING)	IfcRoot
+    # OwnerHistory	    IfcOwnerHistory (ENTITY)	    IfcRoot                   OPTIONAL
+    # Name	            IfcLabel (STRING)	            IfcRoot                   OPTIONAL
+    # Description	      IfcText (STRING)	            IfcRoot                   OPTIONAL
+    # RelatedObjects	  SET OF IfcRoot (ENTITY)	      IfcRelAssociates
+    # RelatingMaterial	IfcMaterialSelect (SELECT)	  IfcRelAssociatesMaterial
+    def initialize(ifc_exporter, aRelatedObjects, ifcMaterialLayerSetUsage)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCRELASSOCIATESMATERIAL"
+      @ifc_exporter.add(self)
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << set_globalId
+      @a_Attributes << @ifc_exporter.ifcProject.ifcOwnerHistory.record_nr
+      @a_Attributes << "$"
+      @a_Attributes << "$"
+      @a_Attributes << ifc_exporter.ifcList(aRelatedObjects)
+      @a_Attributes << ifcMaterialLayerSetUsage.record_nr
+    end
+  end
+
+# kleur exporteren
+#231= IFCEXTRUDEDAREASOLID(#227,#228,#36,2960.);
+#234= IFCSHAPEREPRESENTATION(#51,'Body','SweptSolid',(#231));
+#240= IFCPRODUCTDEFINITIONSHAPE($,$,(#201,#234));
+#244= IFCRELASSOCIATESMATERIAL('3rezN6ZsexG8ShnqMhP$g5',#13,$,$,(#170),#155);
+#246= IFCCOLOURRGB($,0.76078431,0.61568627,0.54509804);
+#247= IFCSURFACESTYLERENDERING(#246,0.,IFCNORMALISEDRATIOMEASURE(0.69),$,$,$,IFCNORMALISEDRATIOMEASURE(0.83),$,.NOTDEFINED.);
+#248= IFCSURFACESTYLE('21 Buitenwand metselwerk',.BOTH.,(#247));
+#250= IFCPRESENTATIONSTYLEASSIGNMENT((#248));
+#252= IFCSTYLEDITEM(#231,(#250),$);
+
+# materiaal omschrijving exporteren
+#136= IFCMATERIALLAYER(#123,100.,.U.);
+#138= IFCMATERIAL('410 Luchtspouw buiten');
+#141= IFCMATERIALLAYER(#138,40.,.U.);
+#143= IFCMATERIAL('400 Isolatie basis');
+#146= IFCMATERIALLAYER(#143,100.,.U.);
+#148= IFCMATERIAL('100 Leeg- Binnenblad');
+#151= IFCMATERIALLAYER(#148,100.,.U.);
+#153= IFCMATERIALLAYERSET((#136,#141,#146,#151),'01 Algemene BU wand iso');
+#155= IFCMATERIALLAYERSETUSAGE(#153,.AXIS2.,.POSITIVE.,0.);
+#244= IFCRELASSOCIATESMATERIAL('3rezN6ZsexG8ShnqMhP$g5',#13,$,$,(#170),#155);
+#170= IFCWALLSTANDARDCASE('0lJANQLbCEHPkU1Xq9w_bk',#13,'Wand-001',$,$,#167,#240,'2F4CA5DA-5653-0E45-9B-9E-061D09EBE96E');
+
   #copy from IfcWall, needs cleaning up
   class IfcWallStandardCase < IfcWall
-  # Attribute	      Type	                            Defined By
-  # GlobalId	      IfcGloballyUniqueId (STRING)	    IfcRoot
-  # OwnerHistory	  IfcOwnerHistory (ENTITY)	        IfcRoot
-  # Name	          IfcLabel (STRING)	                IfcRoot     OPTIONAL
-  # Description	    IfcText (STRING)	                IfcRoot     OPTIONAL
-  # ObjectType	    IfcLabel (STRING)	                IfcObject   OPTIONAL
-  # ObjectPlacement	IfcObjectPlacement (ENTITY)	      IfcProduct  OPTIONAL
-  # Representation	IfcProductRepresentation (ENTITY)	IfcProduct  OPTIONAL
-  # Tag           	IfcIdentifier (STRING)	          IfcElement  OPTIONAL
+    # Attribute	      Type	                            Defined By
+    # GlobalId	      IfcGloballyUniqueId (STRING)	    IfcRoot
+    # OwnerHistory	  IfcOwnerHistory (ENTITY)	        IfcRoot
+    # Name	          IfcLabel (STRING)	                IfcRoot     OPTIONAL
+    # Description	    IfcText (STRING)	                IfcRoot     OPTIONAL
+    # ObjectType	    IfcLabel (STRING)	                IfcObject   OPTIONAL
+    # ObjectPlacement	IfcObjectPlacement (ENTITY)	      IfcProduct  OPTIONAL
+    # Representation	IfcProductRepresentation (ENTITY)	IfcProduct  OPTIONAL
+    # Tag           	IfcIdentifier (STRING)	          IfcElement  OPTIONAL
     attr_accessor :record_nr
     def initialize(project, ifc_exporter, planar)
       @project = project
@@ -290,9 +414,26 @@ module Brewsky::BimTools
       openings
       
       set_BaseQuantities
+      set_materials
       
       #add self to the list of entities contained in the building
       @ifc_exporter.add_to_building(self)
+    end
+    def set_materials
+      if @planar.source.material.nil?
+        material_name = "Default"
+      else
+        material_name = @planar.source.material.name
+      end
+      layerThickness = @planar.width
+      aMaterialLayers = Array.new
+      aMaterialLayers << IfcMaterialLayer.new(@ifc_exporter, material_name, layerThickness).record_nr
+      sLayerSetName = layerThickness.to_s + " " + material_name
+      materialLayerSet = IfcMaterialLayerSet.new(@ifc_exporter, aMaterialLayers, sLayerSetName)
+      materialLayerSetUsage = IfcMaterialLayerSetUsage.new(@ifc_exporter, materialLayerSet)
+      aRelatedObjects = Array.new
+      aRelatedObjects << self.record_nr
+      IfcRelAssociatesMaterial.new(@ifc_exporter, aRelatedObjects, materialLayerSetUsage)
     end
     def set_objectPlacement(bt_entity)
       
