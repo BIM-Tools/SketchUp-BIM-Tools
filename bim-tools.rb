@@ -24,6 +24,7 @@
 # ifc materials(layers)
 
 # Changelog:
+# 120924 improved IFC header
 # 120922 fixed double click to re-open dialog
 # 120922 fixed multiple models for mac(hopefully)
 # 120922 Greatly improved opening and switching of models and hopefully multiple models for mac
