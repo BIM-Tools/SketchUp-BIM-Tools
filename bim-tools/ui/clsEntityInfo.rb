@@ -23,7 +23,7 @@ module Brewsky::BimTools
     def initialize(dialog, id)
       @dialog = dialog
       @id = id.to_s
-      @project = dialog.project
+      #@project = dialog.project
       @status = true
       @name = "EntityInfo"
       @title = "Entity Info"
@@ -50,7 +50,7 @@ module Brewsky::BimTools
         
         bt_entities = @dialog.selection.btEntities?
   
-        bt_entities_update(@project, bt_entities, h_Properties)
+        bt_entities_update(@dialog.project, bt_entities, h_Properties)
         self.update(bt_entities)
       }
     end
@@ -83,7 +83,7 @@ module Brewsky::BimTools
       end
       # pas de waarde voor breedte aan!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       # zoek in selectie of het een bt-object is, als dat zo is, pas de breedte daar op aan
-      bt_entities = @project.library.array_remove_non_bt_entities(@project, entities)
+      bt_entities = @dialog.project.library.array_remove_non_bt_entities(@dialog.project, entities)
   
       if bt_entities[0] != nil
         if bt_entities.length == 1

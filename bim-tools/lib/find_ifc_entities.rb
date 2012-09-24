@@ -110,9 +110,9 @@ module Brewsky::BimTools
           unless guid[1][0].nil? || guid[1][1].nil?
             require "bim-tools/lib/clsPlanarElement.rb"
             width = guid[1][1].get_attribute "ifc", "width"
-            width = width.to_l.to_mm
+            width = width.to_l#.to_mm
             offset = guid[1][1].get_attribute "ifc", "offset"
-            offset = offset.to_l.to_mm
+            offset = offset.to_l#.to_mm
             planar = ClsPlanarElement.new(@project, guid[1][0], width, offset, guid[0])
             planar.geometry=(guid[1][1])
             #planar.width= width.to_l.to_mm

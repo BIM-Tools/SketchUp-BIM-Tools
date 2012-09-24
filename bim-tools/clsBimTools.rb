@@ -43,12 +43,6 @@ module Brewsky::BimTools
         end
       end
     end
-   # def set_btDialog(btDialog)
-
-    #end
-    #def add_BtProject(btProject)
-    #  @aBtProjects << btProject
-    #end
     def new_BtProject
       btProject = ClsBtProject.new
       @aBtProjects << btProject

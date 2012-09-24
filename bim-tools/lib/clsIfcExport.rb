@@ -176,10 +176,19 @@ module Brewsky::BimTools
       return recordNr + " = " + entityType + "(" + s_Attributes + ");\n"
     end
     def header
+      #@export_base_file = export_base_file
+      time = Time.new
+      @timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
+      @author = @model.get_attribute "ifc", "author", "Architect"
+      @organization = @model.get_attribute "ifc", "organization", "Building Designer Office"
+      @preprocessor_version = "BIM-Tools"
+      @originating_system = "example"
+      @authorization = @model.get_attribute "ifc", "authorization", "The authorising person"
+      
       return "ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION (('ViewDefinition [CoordinationView]'), '2;1');
-FILE_NAME ('test.ifc', '2011-01-01T11:11:11', ('Architect'), ('Building Designer Office'), 'BIM-Tools', 'example', 'The authorising person');
+FILE_NAME ('" + @skpName + ".ifc', '" + @timestamp + "', ('" + @author + "'), ('" + @organization + "'), '" + @preprocessor_version + "', '" + @originating_system + "', '" + @authorization + "');
 FILE_SCHEMA (('IFC2X3'));
 ENDSEC;
 DATA;
