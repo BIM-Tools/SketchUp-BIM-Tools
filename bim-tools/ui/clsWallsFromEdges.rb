@@ -23,7 +23,7 @@ module Brewsky::BimTools
     def initialize(dialog, id)
       @dialog = dialog
       @id = id.to_s
-      @project = dialog.project
+      #@project = dialog.project
       @status = true
       @name = "WallsFromEdges"
       @title = "Create walls from edges"
@@ -59,7 +59,7 @@ module Brewsky::BimTools
               a_edges << entity
             end
           end
-          bt_entities = WallsFromEdges.new(@project, a_edges, h_Properties)
+          bt_entities = WallsFromEdges.new(@dialog.project, a_edges, h_Properties)
         end
         self.update(bt_entities)
       }

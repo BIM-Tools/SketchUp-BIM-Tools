@@ -288,7 +288,7 @@ module Brewsky::BimTools
       # "local" IFC array
       @a_Attributes = Array.new
       @a_Attributes << IfcMaterial.new(ifc_exporter, material_name).record_nr
-      @a_Attributes << layerThickness
+      @a_Attributes << layerThickness.to_mm.to_f.to_s
       @a_Attributes << ".U."
     end
   end
@@ -355,12 +355,116 @@ module Brewsky::BimTools
       @a_Attributes << ifcMaterialLayerSetUsage.record_nr
     end
   end
+  
+  #IFCCOLOURRGB($,0.76078431,0.61568627,0.54509804);
+  class IfcColourRgb < IfcBase
+    # Attribute	Type	                            Defined By
+    # Red	      IfcNormalisedRatioMeasure (REAL)	IfcColourRgb
+    # Green	    IfcNormalisedRatioMeasure (REAL)	IfcColourRgb
+    # Blue	    IfcNormalisedRatioMeasure (REAL)	IfcColourRgb
+    def initialize(ifc_exporter, material)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCCOLOURRGB"
+      @ifc_exporter.add(self)
+      @material = material
 
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << "$"
+      @a_Attributes << color(0)
+      @a_Attributes << color(1)
+      @a_Attributes << color(2)
+    end
+    def color(id)
+      if @material.nil?
+        return "1."
+      else
+        rgb = @material.color.to_a[id]
+        return (rgb.to_f / 255.to_f).to_s
+      end
+    end
+  end
+  
+  #IFCSURFACESTYLERENDERING(#246,0.,IFCNORMALISEDRATIOMEASURE(0.69),$,$,$,IFCNORMALISEDRATIOMEASURE(0.83),$,.NOTDEFINED.);
+  class IfcSurfaceStyleShading < IfcBase
+    # Attribute	                Type	                              Defined By
+    # SurfaceColour	            IfcColourRgb (ENTITY)	              IfcSurfaceStyleShading
+    def initialize(ifc_exporter, material)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCSURFACESTYLESHADING"
+      @ifc_exporter.add(self)
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << IfcColourRgb.new(ifc_exporter, material).record_nr
+    end
+  end
+  
+  #IFCSURFACESTYLE('21 Buitenwand metselwerk',.BOTH.,(#247));
+  class IfcSurfaceStyle < IfcBase
+    # Attribute Type	                                        Defined By
+    # Name	    IfcLabel (STRING)	                            IfcPresentationStyle
+    # Side	    IfcSurfaceSide (ENUM)	                        IfcSurfaceStyle
+    # Styles	  SET OF IfcSurfaceStyleElementSelect (SELECT)	IfcSurfaceStyle
+    def initialize(ifc_exporter, material, side)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCSURFACESTYLE"
+      @ifc_exporter.add(self)
+      aSurfaceStyleElementSelect = Array.new
+      aSurfaceStyleElementSelect << IfcSurfaceStyleShading.new(ifc_exporter, material).record_nr
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << "'" + material_name(material) + "'"
+      @a_Attributes << "." + side + "."
+      @a_Attributes << ifc_exporter.ifcList(aSurfaceStyleElementSelect)
+    end
+    def material_name(material)
+      material == nil ? "Default" : material.name
+    end
+  end
+  
+#250= IFCPRESENTATIONSTYLEASSIGNMENT((#248));
+  class IfcPresentationStyleAssignment < IfcBase
+    # Attribute Type	                                      Defined By
+    # Styles	  SET OF IfcPresentationStyleSelect (SELECT)	IfcPresentationStyleAssignment
+    def initialize(ifc_exporter, material, side)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCPRESENTATIONSTYLEASSIGNMENT"
+      @ifc_exporter.add(self)
+      aPresentationStyleSelect = Array.new
+      aPresentationStyleSelect << IfcSurfaceStyle.new(ifc_exporter, material, side).record_nr
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << ifc_exporter.ifcList(aPresentationStyleSelect)
+    end
+  end
+  
+  #IFCSTYLEDITEM(#231,(#250),$);
+  class IfcStyledItem < IfcBase
+    # Attribute Type	                                          Defined By
+    # Item	    IfcRepresentationItem (ENTITY)	                IfcStyledItem
+    # Styles	  SET OF IfcPresentationStyleAssignment (ENTITY)	IfcStyledItem
+    # Name	    IfcLabel (STRING)                               IfcStyledItem OPTIONAL
+    def initialize(ifc_exporter, entity, source)
+      @ifc_exporter = ifc_exporter
+      @entityType = "IFCSTYLEDITEM"
+      @ifc_exporter.add(self)
+      aPresentationStyles = Array.new
+      aPresentationStyles << IfcPresentationStyleAssignment.new(ifc_exporter, source.material, "POSITIVE").record_nr
+      aPresentationStyles << IfcPresentationStyleAssignment.new(ifc_exporter, source.back_material, "NEGATIVE").record_nr
+      
+      # "local" IFC array
+      @a_Attributes = Array.new
+      @a_Attributes << entity
+      @a_Attributes << ifc_exporter.ifcList(aPresentationStyles)
+      @a_Attributes << "$"
+    end
+  end
+  
 # kleur exporteren
 #231= IFCEXTRUDEDAREASOLID(#227,#228,#36,2960.);
-#234= IFCSHAPEREPRESENTATION(#51,'Body','SweptSolid',(#231));
-#240= IFCPRODUCTDEFINITIONSHAPE($,$,(#201,#234));
-#244= IFCRELASSOCIATESMATERIAL('3rezN6ZsexG8ShnqMhP$g5',#13,$,$,(#170),#155);
 #246= IFCCOLOURRGB($,0.76078431,0.61568627,0.54509804);
 #247= IFCSURFACESTYLERENDERING(#246,0.,IFCNORMALISEDRATIOMEASURE(0.69),$,$,$,IFCNORMALISEDRATIOMEASURE(0.83),$,.NOTDEFINED.);
 #248= IFCSURFACESTYLE('21 Buitenwand metselwerk',.BOTH.,(#247));
@@ -473,6 +577,10 @@ module Brewsky::BimTools
       aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Axis'", "'Curve2D'", aCurve2d).record_nr # SweptSolid Representation
       aRepresentations << IfcShapeRepresentation.new(@ifc_exporter, "'Body'", "'SweptSolid'", aSweptSolid).record_nr # SweptSolid Representation
       #group.erase!
+      #aRepresentations.each do|representation|
+        IfcStyledItem.new(@ifc_exporter, aCurve2d[0], @planar.source)
+        IfcStyledItem.new(@ifc_exporter, aSweptSolid[0], @planar.source)
+      #end
       return IfcProductDefinitionShape.new(@ifc_exporter, @planar, aRepresentations)
     end
     

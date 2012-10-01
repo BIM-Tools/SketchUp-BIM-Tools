@@ -24,6 +24,8 @@
 # ifc materials(layers)
 
 # Changelog:
+# 120930 BT objects do not lose relastions anymore
+# 120928 Added color to FC export
 # 120924 improved IFC header
 # 120922 fixed double click to re-open dialog
 # 120922 fixed multiple models for mac(hopefully)

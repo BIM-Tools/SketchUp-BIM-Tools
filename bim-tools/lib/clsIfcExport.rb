@@ -28,7 +28,6 @@ module Brewsky::BimTools
     def initialize(project, selection=nil)
       @model=Sketchup.active_model
       @project = project
-      puts @project
       # "total" IFC array
       @a_Ifc = Array.new
       

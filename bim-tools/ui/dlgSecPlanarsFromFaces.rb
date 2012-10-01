@@ -23,7 +23,7 @@ module Brewsky::BimTools
     def initialize(dialog, id)
       @dialog = dialog
       @id = id.to_s
-      @project = dialog.project
+      #@project = dialog.project
       @status = true
       @name = "PlanarsFromFaces"
       @title = "Create thick faces"
@@ -61,7 +61,7 @@ module Brewsky::BimTools
           #end
           
           
-          planar_from_faces = PlanarFromFaces.new(@project, selection, h_Properties)
+          planar_from_faces = PlanarFromFaces.new(@dialog.project, selection, h_Properties)
           
           #hmmmm, should one tool need to activate an other????
           bt_entities = planar_from_faces.activate
