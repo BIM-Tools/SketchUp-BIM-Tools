@@ -17,11 +17,8 @@
 
 # roadmap 0.13:
 # columns
-
-# roadmap 0.12:
 # fix side-faces normal direction in openings
 # fix project properties(different way of reading/writing properties? one at a time instead of array?)
-# ifc materials(layers)
 
 # Changelog:
 # 121002 Fixed Bt-entities observers inside groups/components
@@ -66,7 +63,7 @@ module Brewsky
     require 'extensions.rb'
 
     bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-    bimtools.version = '0.11.0'
+    bimtools.version = '0.12.0'
     bimtools.description = "Tools to create building parts and export these to IFC."
     Sketchup.register_extension bimtools, true
 

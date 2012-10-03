@@ -353,7 +353,7 @@ module Brewsky::BimTools
       @a_Attributes = Array.new
       #@a_Attributes << @ifc_exporter.set_IfcOrganization.record_nr
       @a_Attributes << IfcOrganization.new(@ifc_exporter, "'BIM-Tools Project'", "'Open source Building-modeller project'").record_nr
-      @a_Attributes << "'0.11.0'"
+      @a_Attributes << "'0.12.0'"
       @a_Attributes << "'BIM-Tools for SketchUp'"
       @a_Attributes << "'BIM-Tools'"
     end
