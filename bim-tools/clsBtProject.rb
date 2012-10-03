@@ -461,67 +461,6 @@ module Brewsky::BimTools
         }
       end
     end
-    
-    # on open group/component: create new entitiesobserver for possible nested bim-tools entities
-    class BtEntitiesObserver < Sketchup::EntitiesObserver
-      def initialize(project)
-        @project = project
-      end
-      
-      # what to do when component is placed? cut hole if possible.
-      def onElementAdded(entities, entity)
-  
-        # if cutting-component?
-        # if glued?
-        # if glued to cuttable object?
-        # then cut hole + convert component to btObject
-      end
-      
-      # what to do if element is changed, and check if part of BtEntity.
-      def onElementModified(entities, entity)
-        unless entity.deleted?
-          if entity.is_a?(Sketchup::Face)#.typename == "Face"
-          
-            # check if entity is part of a building element
-            bt_entity = @project.library.source_to_bt_entity(@project, entity)
-            
-            # this causes way too much overhead because every object is recreated multiple times
-            if bt_entity != nil
-            
-              # do not refresh geometry when only "hidden"-state is changed
-              if bt_entity.source_hidden? == bt_entity.source.hidden?
-                @project.source_changed(bt_entity)
-              else
-                bt_entity.source_hidden = bt_entity.source.hidden?
-              end
-            else
-              guid = entity.get_attribute "ifc", "guid"
-              unless guid.nil?
-                puts "Search for missing faces"
-                # only start this when faces are deleted?
-                @project.source_recovery
-              end
-            end
-          elsif entity.is_a?(Sketchup::ComponentInstance)
-            unless entity.glued_to.nil?
-              source = entity.glued_to
-              
-              # run only if added entity cuts_opening
-              if entity.definition.behavior.cuts_opening?
-              
-                # check if entity is part of a building element
-                bt_entity = @project.library.source_to_bt_entity(@project, source)
-                
-                # if it is a bt-entity, redraw geometry
-                unless bt_entity.nil?
-                  bt_entity.update_geometry
-                end
-              end
-            end
-          end
-        end
-      end
-    end
   end
 
 end

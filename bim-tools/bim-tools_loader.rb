@@ -24,6 +24,6 @@ module Brewsky::BimTools
   
   # Create a basic bim-tools object 
   require 'bim-tools/clsBimTools.rb'
-  ClsBimTools.new
+  PLUGIN = ClsBimTools.new
 
 end

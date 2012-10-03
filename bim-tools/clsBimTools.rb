@@ -30,7 +30,8 @@ module Brewsky::BimTools
       require 'bim-tools/ui/bt_dialog.rb'
       @btDialog = Bt_dialog.new(self)
       
-      ClsBtUi.new(self) # start all UI elements: webdialog (?toolbar?)
+      # start all UI elements: webdialog (?toolbar?)
+      ClsBtUi.new(self)
       
      # Attach the observer
      Sketchup.add_observer(BtAppObserver.new(self))
@@ -65,30 +66,95 @@ module Brewsky::BimTools
     def onOpenModel(model)
       @bimTools.new_BtProject
     end
+    
+    # on close model, remove btProject?
   end
+  
+  # This observer keeps the btDialog updated based on the current selection
   class MySelectionObserver < Sketchup::SelectionObserver
-      def initialize(project, bimTools)#bt_dialog, h_sections)
-        @project = project
-        @bimTools = bimTools
-        # UI.messagebox("@project: " + @project.to_s)
-        #@bt_dialog = bimTools.btDialog
-        # UI.messagebox("@bt_dialog: " + @bt_dialog.to_s)
-        #@entityInfo = entityInfo
-        #@wallsfromedges = wallsfromedges
-        #@h_sections = bimTools.btDialog.h_sections
+    def initialize(project, bimTools)#bt_dialog, h_sections)
+      @project = project
+      @bimTools = bimTools
+      @active_entities = Sketchup.active_model.active_entities
+    end
+    def onSelectionBulkChange(selection)
+      selection_changed(selection)
+    end
+    def onSelectionCleared(selection)
+      selection_changed(selection)
+    end
+    def selection_changed(selection)
+      unless @bimTools.btDialog.nil?
+        @bimTools.btDialog.update_sections(selection)
       end
-      def onSelectionBulkChange(selection)
-      
-        # open menu entity_info als de selectie wijzigt
-        unless @bimTools.btDialog.nil?
-          @bimTools.btDialog.update_sections(selection)
-        end
+      update_active_entities
+    end
+    def update_active_entities
+      unless Sketchup.active_model.active_entities == @active_entities
+        @active_entities = Sketchup.active_model.active_entities
+        @active_entities.add_observer(BtEntitiesObserver.new(@project))
       end
-      def onSelectionCleared(selection)
-        unless @bimTools.btDialog.nil?
-          @bimTools.btDialog.update_sections(selection)
-        end
-      end
+    end
   end
 
+  # on open group/component: create new entitiesobserver for possible nested bim-tools entities
+  class BtEntitiesObserver < Sketchup::EntitiesObserver
+    def initialize(project)
+      @project = project
+    end
+    
+    # what to do when component is placed? cut hole if possible.
+    def onElementAdded(entities, entity)
+
+      # if cutting-component?
+      # if glued?
+      # if glued to cuttable object?
+      # then cut hole + convert component to btObject
+    end
+    
+    # what to do if element is changed, and check if part of BtEntity.
+    def onElementModified(entities, entity)
+      unless entity.deleted?
+        if entity.is_a?(Sketchup::Face)
+        
+          # check if entity is part of a building element
+          bt_entity = @project.library.source_to_bt_entity(@project, entity)
+          
+          # this causes way too much overhead because every object is recreated multiple times
+          if bt_entity != nil
+          
+            # do not refresh geometry when only "hidden"-state is changed
+            if bt_entity.source_hidden? == bt_entity.source.hidden?
+              @project.source_changed(bt_entity)
+            else
+              bt_entity.source_hidden = bt_entity.source.hidden?
+            end
+          else
+            guid = entity.get_attribute "ifc", "guid"
+            unless guid.nil?
+              puts "Search for missing faces"
+              # only start this when faces are deleted?
+              @project.source_recovery
+            end
+          end
+        elsif entity.is_a?(Sketchup::ComponentInstance)
+          unless entity.glued_to.nil?
+            source = entity.glued_to
+            
+            # run only if added entity cuts_opening
+            if entity.definition.behavior.cuts_opening?
+            
+              # check if entity is part of a building element
+              bt_entity = @project.library.source_to_bt_entity(@project, source)
+              
+              # if it is a bt-entity, redraw geometry
+              unless bt_entity.nil?
+                bt_entity.update_geometry
+              end
+            end
+          end
+        end
+      end
+    end
+  end
 end
