@@ -79,9 +79,6 @@ module Brewsky::BimTools
       
       # When creating a new project, check if there are any IFC entities present in the current SketchUp model
       ClsFindIfcEntities.new(self)
-  
-      #set observers
-      Sketchup.active_model.entities.add_observer(BtEntitiesObserver.new(self))
       
       #testing
       #Sketchup.active_model.set_attribute "ifc", "IfcProject_GlobalId", "632791r834"
