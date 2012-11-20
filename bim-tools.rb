@@ -21,6 +21,9 @@
 # fix project properties(different way of reading/writing properties? one at a time instead of array?)
 
 # Changelog:
+# 121120 Removed unnecessary "UTF-8 with BOM" file
+# 121120 Updated outdated headers to 2012
+# 121120 Split up all double module-declarations
 # 121002 Fixed Bt-entities observers inside groups/components
 # 120930 BT objects do not lose relastions anymore
 # 120928 Added color to FC export
@@ -63,7 +66,7 @@ module Brewsky
     require 'extensions.rb'
 
     bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-    bimtools.version = '0.12.0'
+    bimtools.version = '0.12.1'
     bimtools.description = "Tools to create building parts and export these to IFC."
     Sketchup.register_extension bimtools, true
   end # module BimTools
