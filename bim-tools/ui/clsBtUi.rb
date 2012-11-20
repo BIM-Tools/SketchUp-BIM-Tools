@@ -15,16 +15,17 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-module Brewsky::BimTools
+module Brewsky
+  module BimTools
 
-  # Class BIM-Tools UI: manages UI elements
-  class ClsBtUi
-    def initialize(bimTools)
-      
-      # create BIM-Tools toolbar
-      require "bim-tools/ui/toolbar.rb"
-      BtToolbar.new(bimTools)
+    # Class BIM-Tools UI: manages UI elements
+    class ClsBtUi
+      def initialize(bimTools)
+        
+        # create BIM-Tools toolbar
+        require "bim-tools/ui/toolbar.rb"
+        BtToolbar.new(bimTools)
+      end
     end
-  end
-  
-end
+  end # module BimTools
+end # module Brewsky

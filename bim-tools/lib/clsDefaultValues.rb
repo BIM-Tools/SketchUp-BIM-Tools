@@ -15,42 +15,42 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-module Brewsky::BimTools
-
-  class ClsDefaultValues
-    def initialize
-      @h_defaults = Hash.new
-      parse_config
-    end
-    def parse_config
-  
-      pathname = File.expand_path( File.dirname(__FILE__) )
-      mainpath = pathname.split('lib')[0]
-  
-      # open the file
-      f = File.open(mainpath + "/bim-tools.cfg", 'r')
-  
-      # loop through each record in the file, adding each record to our array.
-      f.each_line { |line|
-        
-        # parse line unless the first character == # or the line is empty
-        unless line[0] == 35 || line.length == 1
-          a_Value = line.split('=')
-          key = a_Value[0].strip
-          value = a_Value[1].strip
-          @h_defaults[key] = value
-        end
-      }
-    end
+module Brewsky
+  module BimTools
+    class ClsDefaultValues
+      def initialize
+        @h_defaults = Hash.new
+        parse_config
+      end
+      def parse_config
     
-    # call this function to get a default value for "key", if does not exist it returns nil
-    def get(key)
-      if @h_defaults[key]
-        return @h_defaults[key]
-      else
-        return nil
+        pathname = File.expand_path( File.dirname(__FILE__) )
+        mainpath = pathname.split('lib')[0]
+    
+        # open the file
+        f = File.open(mainpath + "/bim-tools.cfg", 'r')
+    
+        # loop through each record in the file, adding each record to our array.
+        f.each_line { |line|
+          
+          # parse line unless the first character == # or the line is empty
+          unless line[0] == 35 || line.length == 1
+            a_Value = line.split('=')
+            key = a_Value[0].strip
+            value = a_Value[1].strip
+            @h_defaults[key] = value
+          end
+        }
+      end
+      
+      # call this function to get a default value for "key", if does not exist it returns nil
+      def get(key)
+        if @h_defaults[key]
+          return @h_defaults[key]
+        else
+          return nil
+        end
       end
     end
-  end
-
-end
+  end # module BimTools
+end # module Brewsky

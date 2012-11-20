@@ -15,56 +15,56 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-module Brewsky::BimTools
-
-  require 'bim-tools/ui/clsDialogSection.rb'
-  
-  class UiIfcExport < ClsDialogSection
-    def initialize(dialog, id)
-      @dialog = dialog
-      @id = id.to_s
-      @dialog = dialog
-      @project = dialog.project
-      @status = false
-      @name = "IfcExport"
-      @title = "Export to IFC"
-      @buttontext = "Export to IFC file"
-      @html_content = html_content
-      callback
+module Brewsky
+  module BimTools
+    require 'bim-tools/ui/clsDialogSection.rb'
+    
+    class UiIfcExport < ClsDialogSection
+      def initialize(dialog, id)
+        @dialog = dialog
+        @id = id.to_s
+        @dialog = dialog
+        @project = dialog.project
+        @status = false
+        @name = "IfcExport"
+        @title = "Export to IFC"
+        @buttontext = "Export to IFC file"
+        @html_content = html_content
+        callback
+      end
+    
+      #action to be started on webdialog form submit
+      def callback
+        @dialog.webdialog.add_action_callback(@name) {|dialog, params|
+          require 'bim-tools/lib/clsIfcExport.rb'
+          exporter = IfcExporter.new(@dialog.project)
+        }
+      end
+    
+      # update webdialog based on selected entities
+      def update(entities)
+        @html_content = html_content
+        refresh_dialog
+      end
+    
+      def html_content
+        return "
+    <form id='" + @name + "' name='" + @name + "' action='skp:" + @name + "@true'>
+    " + html_properties_editable + html_properties_fixed + "
+    <input type='submit' name='submit' id='submit' value='" + @buttontext + "' />
+    </form>
+        "
+      end
+    
+      def html_properties_editable
+        html = ""
+        return html
+      end
+    
+      def html_properties_fixed
+        html = ""
+        return html
+      end
     end
-  
-    #action to be started on webdialog form submit
-    def callback
-      @dialog.webdialog.add_action_callback(@name) {|dialog, params|
-        require 'bim-tools/lib/clsIfcExport.rb'
-        exporter = IfcExporter.new(@dialog.project)
-      }
-    end
-  
-    # update webdialog based on selected entities
-    def update(entities)
-      @html_content = html_content
-      refresh_dialog
-    end
-  
-    def html_content
-      return "
-  <form id='" + @name + "' name='" + @name + "' action='skp:" + @name + "@true'>
-  " + html_properties_editable + html_properties_fixed + "
-  <input type='submit' name='submit' id='submit' value='" + @buttontext + "' />
-  </form>
-      "
-    end
-  
-    def html_properties_editable
-      html = ""
-      return html
-    end
-  
-    def html_properties_fixed
-      html = ""
-      return html
-    end
-  end
-
-end
+  end # module BimTools
+end # module Brewsky
