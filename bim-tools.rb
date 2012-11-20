@@ -66,6 +66,5 @@ module Brewsky
     bimtools.version = '0.12.0'
     bimtools.description = "Tools to create building parts and export these to IFC."
     Sketchup.register_extension bimtools, true
-
-  end
-end
+  end # module BimTools
+end # module Brewsky
