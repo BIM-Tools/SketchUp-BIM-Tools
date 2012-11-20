@@ -248,7 +248,7 @@ END-ISO-10303-21;
 #      @header = "ISO-10303-21;
 #HEADER;
 #FILE_DESCRIPTION (('ViewDefinition [CoordinationView]'), '2;1');
-#FILE_NAME ('test.ifc', '2011-01-01T11:11:11', ('Architect'), ('Building Designer Office'), 'BIM-Tools', 'example', 'The authorising person');
+#FILE_NAME ('test.ifc', '2012-01-01T11:11:11', ('Architect'), ('Building Designer Office'), 'BIM-Tools', 'example', 'The authorising person');
 #FILE_SCHEMA (('IFC2X3'));
 #ENDSEC;
 #DATA;
