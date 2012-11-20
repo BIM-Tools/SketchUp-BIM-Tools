@@ -1,6 +1,6 @@
 #       planar_from_faces.rb
 #       
-#       Copyright (C) 2011 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 #       clsBtProject.rb
 #       
-#       Copyright (C) 2011 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -79,6 +79,9 @@ module Brewsky::BimTools
       
       # When creating a new project, check if there are any IFC entities present in the current SketchUp model
       ClsFindIfcEntities.new(self)
+  
+      #set observers
+      Sketchup.active_model.entities.add_observer(BtEntitiesObserver.new(self))
       
       #testing
       #Sketchup.active_model.set_attribute "ifc", "IfcProject_GlobalId", "632791r834"
