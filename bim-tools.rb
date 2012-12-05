@@ -19,8 +19,13 @@
 # columns
 # fix side-faces normal direction in openings
 # fix project properties(different way of reading/writing properties? one at a time instead of array?)
+# get rid of entitiesobservers
+# hide edges when source edges are softened
+# update webdialog even if not all entities in selection are bt-entities
 
 # Changelog:
+# 121205 Added observer manager
+# 121205 Added on/off button for observers
 # 121120 Removed unnecessary "UTF-8 with BOM" file
 # 121120 Updated outdated headers to 2012
 # 121120 Split up all double module-declarations
@@ -66,7 +71,7 @@ module Brewsky
     require 'extensions.rb'
 
     bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-    bimtools.version = '0.12.1'
+    bimtools.version = '0.12.2'
     bimtools.description = "Tools to create building parts and export these to IFC."
     Sketchup.register_extension bimtools, true
   end # module BimTools

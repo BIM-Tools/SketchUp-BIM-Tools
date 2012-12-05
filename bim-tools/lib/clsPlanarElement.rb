@@ -18,6 +18,7 @@
 module Brewsky
   module BimTools
     require 'bim-tools/lib/clsBuildingElement.rb'
+    require 'bim-tools/lib/ObserverManager.rb'
     
     # building element subtype “planar” class
     # Object "parallel" to sketchup "face" object
@@ -65,10 +66,38 @@ module Brewsky
         #observer = SourceObserver.new
         #observer.set_planar(self)
         #@source.add_observer(observer)
+
+######### check if the entities observer is active
+########active_entities = Sketchup.active_model.active_entities
+########observer_manager = Brewsky::BimTools::ObserverManager
+########if entities_observer.nil?
+########    puts "creating entities observer"
+########  observer_manager.add_entities_observer(@project, active_entities)
+########else
+########  observed = observer_manager.entities_observer.observed
+########  unless active_entities == observed
+########    puts "creating entities observer"
+########  
+########    observer_manager.add_entities_observer(@project, active_entities)
+########  end
+########end
+
+
+        # check if the entities observer is active
+        active_entities = Sketchup.active_model.active_entities
+        observer_manager = Brewsky::BimTools::ObserverManager
+        observer_manager.add_entities_observer(@project, active_entities)
+
+        
       end
       
       # create the geometry for the planar element
       def set_geometry
+        
+        # this method should be no operation by itself, but only part of other operations...
+        # so the start_operation should be re-located
+        model = Sketchup.active_model
+        model.start_operation("Create BIM-Tools geometry", disable_ui=true) # Start of operation/undo section
         entities = Sketchup.active_model.active_entities
         self.check_source
         # do not update geometry when the planar element is in the process of beeing deleted(marked for deletion)
@@ -371,6 +400,9 @@ module Brewsky
         #@aOpenings.each do |opening|
         #puts opening
         #end
+    
+        model.commit_operation # End of operation/undo section
+        model.active_view.refresh # Refresh model
       end
       
       # returns an array of all openings in a planar object(face-cutting instances AND normal openings(loops))

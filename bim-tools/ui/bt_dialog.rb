@@ -110,8 +110,15 @@ module Brewsky
         @dialog.set_html( html )
       end
       def callback
-        self.webdialog.add_action_callback("cmd_bimtools") {|dialog, params|
-          self.close
+        self.webdialog.add_action_callback("cmd_on_off") {|dialog, params|
+          Brewsky::BimTools::ObserverManager.toggle
+          
+          #refresh all geometry
+          @bimTools.active_BtProject.library.entities.each do |bt_entity|
+            bt_entity.update_geometry
+          end
+          self.html_top
+          self.refresh
         }
         self.webdialog.add_action_callback("cmd_toggle_geometry") {|dialog, params|
           @bimTools.active_BtProject.toggle_geometry()
@@ -130,20 +137,115 @@ module Brewsky
         return html_top + content + html_bottom
       end
       def html_top
+        #<link href='" + @pathname + "/bt_dialog.css' rel='stylesheet' type='text/css' />
+        #<style type='text/css'> h1 {background-image: url(" + @imagepath + "minimize.png)}</style>
         return "
         <!DOCTYPE html>
         <html>
         <head>
         <meta charset=utf-8'>
         <title>BIM-Tools - webdialog</title>
-        <link href='" + @pathname + "/bt_dialog.css' rel='stylesheet' type='text/css' />
+        <style type='text/css'> 
+        html {
+          font-family: Tahoma, Verdana, Arial, Helvetica, sans-serif;
+          font-size: 0.7em;
+          height: 100%;
+          background-color: #f0f0f0;
+        }
+        body {
+          margin: 1px;
+          padding: 0;
+        }
+        h1 {
+          font-size: 1em;
+          font-weight: bold;
+          vertical-align:middle;
+          height: 24px;
+          margin: 0;
+          padding: 0;
+          margin-left: 6px;
+          margin-bottom: 0.2em;
+          background-repeat: no-repeat;
+          background-position: right top;
+        }
+        h2 {
+          font-size: 1em;
+          font-weight: bold;
+          margin: 0;
+          padding: 0;
+          margin-left: 5%;
+          margin-bottom: 0.1em;
+        }
+        p {
+          height: 1em;
+        }
+        hr {
+          clear:both;
+          margin: 0;
+          padding: 0;
+          height: 0;
+          border: 0;
+          border-bottom: 1px solid #a0a0a0;
+        }
+        img {
+          vertical-align:middle;
+          margin-right: 6px;
+          border: 0;
+        }
+        a {
+          color: #000000;
+          text-decoration: none;
+        }
+        form {
+          margin: 0;
+          padding: 0;
+        }
+        label {
+          display: block;
+          float: left;
+          width: 37%;
+          height: 1em;
+          margin: 0;
+          padding: 0;
+          margin-left: 5%;
+        }
+        input {
+          font-size: 1em;
+          height: 1em;
+          width: 50%;
+        }
+        select {
+          font-size: 1em;
+          width: 50%;
+          height: 20px;
+        }
+        form hr {
+        }
+        form #submit {
+          font-size: 1em;
+          height: 22px;
+          width: 90%;
+          margin: 0.4em 5% 0.4em 5%;
+        }
+        ul {
+          width: 100%;
+          margin: 0;
+          padding: 4px;
+          list-style-type: none;
+        }
+        li {
+          margin: 0;
+          padding: 0;
+          float: left;
+        }
+        </style>
         <style type='text/css'> h1 {background-image: url(" + @imagepath + "minimize.png)}</style>
         </head>
         <body>
         <ul>
-        <li><a href='skp:cmd_bimtools@true'><img src='" + self.imagepath + "bimtools_large.png' /></a></li>
-        <li><a href='skp:cmd_toggle_geometry@true'><img src='" + self.imagepath + "ToggleGeometry_large.png' /></a></li>
-        <li><a href='skp:cmd_clear@true'><img src='" + self.imagepath + "clear_large.png' /></a></li>
+        <li><a href='skp:cmd_on_off@true'><img src='" + self.imagepath + on_off + "' title='Toggle between manual and automatic mode' /></a></li>
+        <li><a href='skp:cmd_toggle_geometry@true'><img src='" + self.imagepath + "ToggleGeometry_large.png' title='Toggle between source and full geometry visibility' /></a></li>
+        <li><a href='skp:cmd_clear@true'><img src='" + self.imagepath + "clear_large.png' title='Remove all BIM-Tools information from selection' /></a></li>
         </ul>
         <hr />
         "
@@ -170,6 +272,16 @@ module Brewsky
           end
           @dialog.set_html( html )
         }
+      end
+      def on_off
+        stored = Sketchup.read_default "bim-tools", "on_off"
+        if stored.nil?
+          return "off_large.png"
+        elsif stored == "on"
+          return "on_large.png"
+        else
+          return "off_large.png"
+        end
       end
       def webdialog
         return @dialog
