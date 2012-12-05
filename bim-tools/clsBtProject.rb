@@ -80,13 +80,11 @@ module Brewsky
         
         # When creating a new project, check if there are any IFC entities present in the current SketchUp model
         ClsFindIfcEntities.new(self)
-    
-        #set observers
-        Sketchup.active_model.entities.add_observer(BtEntitiesObserver.new(self))
+      
+        # Create the entities observer for the new project, to auto-update the geometry
+        @active_entities = Sketchup.active_model.active_entities
+        ObserverManager.add_entities_observer(@project, @active_entities)
         
-        #testing
-        #Sketchup.active_model.set_attribute "ifc", "IfcProject_GlobalId", "632791r834"
-        # ownerhistory = model.get_attribute "ifc", "IfcProject_OwnerHistory", nil
         return self
       end
       
@@ -276,7 +274,14 @@ module Brewsky
         @organisation_description = set_project_data(organisation_description, @organisation_description, "IfcOrganisation_Description", "organisation_description")
       end
       def set_observers
-        Sketchup.active_model.entities.add_observer(ProjectObserver.new(self))
+
+        # this is only for the "root" entities object! not for group/component entities!!!!!!!!!!!!!!
+        # is this observer needed??????
+        project_observer = ProjectObserver.new(self)
+        entities = Sketchup.active_model.entities
+        ObserverManager.add(project_observer, entities)
+       
+      #  Sketchup.active_model.entities.add_observer(ProjectObserver.new(self))
       #  Sketchup.active_model.selection.add_observer(SelectionObserver.new)###################################################
       end
       
