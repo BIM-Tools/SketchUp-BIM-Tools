@@ -1,6 +1,6 @@
 #       find_ifc_entities.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ module Brewsky
               end
             end
           else
-            if @lib.source_to_bt_entity(@project, ent).nil?
+            unless @lib.source_to_bt_entity(@project, ent)
               ### add_bt_entity(ent)
               if @h_guid_list[guid]
                 @h_guid_list[guid][0] = ent
@@ -88,7 +88,6 @@ module Brewsky
     
       def add_planars
         @h_guid_list.each do |guid|
-        
           # if no lost geometry, check if bt-entity exists with deleted source
           if guid[1][1].nil?
             unless guid[1][0].nil?

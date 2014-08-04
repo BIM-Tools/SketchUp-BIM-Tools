@@ -1,6 +1,6 @@
-#       planar_from_faces.rb
+#       planars_from_faces.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -18,59 +18,53 @@
 module Brewsky
   module BimTools
 
-    # Function that takes an array of SketchUp elements as input, and creates planar objects from the faces in the array.
+    # Function/Tool that takes an array of SketchUp elements as input, and creates planar objects from the faces in the array.
     #   parameters: array of SketchUp elements
     #   returns: array of planar objects
     
-    #module Bt_create
-    class PlanarFromFaces
+    class PlanarsFromFaces
       def initialize(project, a_sources, h_properties=nil)
-        @project = project
         @model = Sketchup.active_model
+        @project = project
         @a_sources = a_sources
         if h_properties.nil?
           @h_properties = Hash.new
         else
           @h_properties = h_properties
         end
+        @width = @h_properties["width"]
+        @offset = @h_properties["offset"]
         
-        # set width value
-        if @h_properties["width"]
-          @width = @h_properties["width"].mm
-        else
-          @width = nil
-        end   
+        ## set width value
+        #if @h_properties["width"]
+          #@width = @h_properties["width"].mm
+        #else
+          #@width = nil
+        #end   
          
-        # set offset value
-        if @h_properties["offset"]
-          @offset = @h_properties["offset"].mm
-        else
-          @offset = nil
-        end
+        ## set offset value
+        #if @h_properties["offset"]
+          #@offset = @h_properties["offset"].mm
+        #else
+          #@offset = nil
+        #end
         
         @a_planars = Array.new
       end
       
       def activate
-        return planar_from_faces(@project, @a_sources)
-      end
-    
-      def planar_from_faces(project, a_sources)
-      
+        @model.start_operation("Create thick faces", disable_ui=true) # Start of operation/undo section
+
         # require planar class
         require "bim-tools/lib/clsPlanarElement.rb"
-      
-        # start undo section
-        @model.start_operation("Create planars", disable_ui=true) # Start of operation/undo section
-        @project = project
         
         # first; create objects 
-        a_sources.each do |source|
+        @a_sources.each do |source|
     
           # create planar object if source is a SketchUp face
           if source.is_a?(Sketchup::Face)
             # check if a BIM-Tools entity already exists for the source face
-            if @project.library.source_to_bt_entity(@project, source).nil?
+            unless @project.library.source_to_bt_entity(@project, source)
               @a_planars << ClsPlanarElement.new(@project, source, @width, @offset)
             end
           end
@@ -87,10 +81,10 @@ module Brewsky
           @model.selection.add planar.geometry
         end
         @model.commit_operation # End of operation/undo section
-        @model.active_view.refresh
+        @model.active_view.refresh # Refresh model
         
         # activate select tool
-        Sketchup.send_action(21022)
+        @model.select_tool(nil)
         return @a_planars
       end
     end

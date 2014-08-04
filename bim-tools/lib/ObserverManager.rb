@@ -1,6 +1,6 @@
 #       ObserverManager.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@ module Brewsky
     # The ObserverManager will keep track of all observers(create, add, remove) and the "observed" objects.
     # is needs 
     module ObserverManager
+      extend self
+      
       stored = Sketchup.read_default "bim-tools", "on_off"
       if stored.nil?
         Sketchup.write_default "bim-tools", "on_off", "off"
@@ -61,7 +63,6 @@ module Brewsky
         observed = @observerList[observer]
         observed.remove_observer observer
         @observerList.delete(observer)
-        puts "observer removed"
       end
       
       # this method will load(add to "observed_object") all BIM-Tools observers
@@ -108,14 +109,14 @@ module Brewsky
         end
       end
       
-      def self.add_models_observer(bimTools)
-        observer = BtModelsObserver.new(bimTools)
+      def self.add_models_observer()
+        observer = BtModelsObserver.new
         self.add(observer, Sketchup)
       end
       
-      def self.add_selection_observer(bimTools, btProject)
-        observer = BtSelectionObserver.new(bimTools, btProject)
-        selection = Sketchup.active_model.selection # should be the project's selection, not the active_models selection
+      def self.add_selection_observer(btProject)
+        observer = BtSelectionObserver.new(btProject)
+        selection = btProject.model.selection
         self.add(observer, selection)
       end
       
@@ -124,16 +125,34 @@ module Brewsky
         # entities observer should only be created when the active collection contains BT-entities
         bt_entities = btProject.library.array_remove_non_bt_entities(btProject, active_entities)
         unless bt_entities.length == 0
+          #puts @entities_observer
           
           # check if an entities observer exists, if so, check if attached to the right entities object
           # if not, create and or attach an entities observer
           if @entities_observer.nil?
+             #puts "entities observer == nil"
             @entities_observer = BtEntitiesObserver.new(btProject, active_entities)
             self.add(@entities_observer, active_entities)
             # puts "entities observer created"
-          elsif active_entities != @observerList[@entities_observer]
+          elsif active_entities == @observerList[@entities_observer]
+             #puts "entities observer == active ent"
+            #self.add(@entities_observer, active_entities)
+            unless btProject == @entities_observer.project
+              @entities_observer.project = btProject
+              self.add(@entities_observer, active_entities)
+            end
+            #@observerList.delete(@entities_observer)
+            #@entities_observer = BtEntitiesObserver.new(btProject, active_entities)
+          else
+            unless btProject == @entities_observer.project
+              @entities_observer.project = btProject
+            end
+            #@observerList.delete(@entities_observer)
+            #@entities_observer = BtEntitiesObserver.new(btProject, active_entities)
             self.add(@entities_observer, active_entities)
             # puts "entities observer re-attached"
+             #puts "entities observer <> active ent + reattached"
+          
           end
         else
           unless @entities_observer.nil?
@@ -150,14 +169,11 @@ module Brewsky
       # ??? could disabling this observer give any trouble ???
       # ??? should any checks be done on re-enabling ???
       class BtModelsObserver < Sketchup::AppObserver
-        def initialize(bimTools)
-          @bimTools = bimTools
-        end
         def onNewModel(model)
-          @bimTools.new_BtProject
+          Brewsky::BimTools.new_BtProject
         end
         def onOpenModel(model)
-          @bimTools.new_BtProject
+          Brewsky::BimTools.new_BtProject
         end
         
         # on close model, remove btProject?
@@ -169,43 +185,44 @@ module Brewsky
       # This observer keeps the btDialog updated based on the current selection
       class BtSelectionObserver < Sketchup::SelectionObserver
         attr_reader :observed
-        def initialize(bimTools, project)#bt_dialog, h_sections)
+        def initialize(project)#bt_dialog, h_sections)
           @project = project
-          @bimTools = bimTools
+          @bimTools = Brewsky::BimTools
           @observed = Sketchup.active_model.active_entities
         end
         def onSelectionBulkChange(selection)
           selection_changed(selection)
-        end
+        end # onSelectionBulkChange
         def onSelectionCleared(selection)
           selection_changed(selection)
-        end
+        end # onSelectionCleared
         def selection_changed(selection)
           unless @bimTools.btDialog.nil?
             @bimTools.btDialog.update_sections(selection)
           end
           
-          # ??? This should only be fired when the active collection is changed ???
-          update_active_entities
-        end
-        def update_active_entities
-          unless Sketchup.active_model.active_entities == @active_entities
+          # ??? This should only be fired when the selection in the ACTIVE collection is changed ???
+          if Sketchup.active_model.active_entities != @observed
+            
+            # reset the current active entities
+            @observed = Sketchup.active_model.active_entities
           
-          # Create the entities observer for the new active collection
-          @active_entities = Sketchup.active_model.active_entities
-          ObserverManager.add_entities_observer(@project, @active_entities)
-          end
-        end
-      end
+            # Create / re-attach the entities observer for the new active collection
+            ObserverManager.add_entities_observer(@project, @observed)
+          end # unless
+        end # selection_changed
+      end # BtSelectionObserver
       
       # it could be enough to create this observer once and just link/unlink it to entities collections if needed
       # for now it is re-created every time the collection switches
       # This observer auto-updates the geometry
       # on open group/component: create new entitiesobserver for possible nested bim-tools entities
       class BtEntitiesObserver < Sketchup::EntitiesObserver
+        attr_accessor :project
         def initialize(project, entities)
           @project = project
           @entities = entities
+          @model = Sketchup.active_model
         end
         
         # what to do when component is placed? cut hole if possible.
@@ -220,17 +237,34 @@ module Brewsky
         # what to do if element is changed, and check if part of BtEntity.
         def onElementModified(entities, entity)
           unless entity.deleted?
+            @model = Sketchup.active_model
+            @model.start_operation("Update BIM-Tools entities", disable_ui=true) # Start of operation/undo section
             if entity.is_a?(Sketchup::Face)
             
               # check if entity is part of a building element
-              bt_entity = @project.library.source_to_bt_entity(@project, entity)
+              if bt_entity = @project.library.source_to_bt_entity(@project, entity)
               
               # this causes way too much overhead because every object is recreated multiple times
-              if bt_entity != nil
               
                 # do not refresh geometry when only "hidden"-state is changed
                 if bt_entity.source_hidden? == bt_entity.source.hidden?
-                  @project.source_changed(bt_entity)
+                  
+                  
+                  
+                  
+                  # check if a tool is active that can change geometry
+                  # or could the check better be reversed?
+                  tools = Sketchup.active_model.tools
+									id = tools.active_tool_id
+                  if [21031, 21048, 21041, 21065, 21094, 21095, 21096, 21100, 21129, 21236, 21525].include? id
+	                  puts "source changed"
+										@project.source_changed(bt_entity)
+                  end
+                  # 21019 = EraseTool ???
+                  # 21074 = PaintTool ???
+                  # 21013 = PasteTool ???
+                  # 21020 = SketchTool ???
+                  
                 else
                   bt_entity.source_hidden = bt_entity.source.hidden?
                 end
@@ -250,18 +284,20 @@ module Brewsky
                 if entity.definition.behavior.cuts_opening?
                 
                   # check if entity is part of a building element
-                  bt_entity = @project.library.source_to_bt_entity(@project, source)
-                  
-                  # if it is a bt-entity, redraw geometry
-                  unless bt_entity.nil?
+                  if bt_entity = @project.library.source_to_bt_entity(@project, source)
                     bt_entity.update_geometry
                   end
                 end
               end
             end
+            @model.commit_operation # End of operation/undo section
+            @model.active_view.refresh # Refresh model
           end
         end
       end
+      
+      # Create the models observer to keep track on any changes in the open models(new, close)
+      self.add_models_observer()
       
     end # module ObserverManager
   end # module BimTools

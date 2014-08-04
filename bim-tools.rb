@@ -1,6 +1,6 @@
 #       bim-tools.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2014 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -15,15 +15,23 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# roadmap 0.13:
+# roadmap:
 # columns
+
+# roadmap 0.13:
 # fix side-faces normal direction in openings
 # fix project properties(different way of reading/writing properties? one at a time instead of array?)
 # get rid of entitiesobservers
-# hide edges when source edges are softened
-# update webdialog even if not all entities in selection are bt-entities
+# improve IFC export
+# speed up hidden edges
 
 # Changelog:
+# 140804 patch for SketchUp 2014 + some code cleanup and speed improvements from the past year
+# 130107 Fixed IFC wall layer thickness
+# 130105 Improved ifc export: added ifcwallstandardcase with openings
+# 130102 replaced bim-tools class functionality with the module
+# 121210 hide edges when source edges are softened
+# 121210 update webdialog even if not all entities in selection are bt-entities
 # 121205 Added observer manager
 # 121205 Added on/off button for observers
 # 121120 Removed unnecessary "UTF-8 with BOM" file
@@ -71,7 +79,7 @@ module Brewsky
     require 'extensions.rb'
 
     bimtools = SketchupExtension.new "bim-tools", "bim-tools/bim-tools_loader.rb"
-    bimtools.version = '0.12.2'
+    bimtools.version = '0.12.3'
     bimtools.description = "Tools to create building parts and export these to IFC."
     Sketchup.register_extension bimtools, true
   end # module BimTools

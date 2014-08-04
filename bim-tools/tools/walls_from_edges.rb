@@ -1,6 +1,6 @@
 #       walls_from_edges.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -18,42 +18,80 @@
 module Brewsky
   module BimTools
     class WallsFromEdges
-      def initialize(project, a_edges, h_properties)
+      def initialize(project, a_sources, h_properties=nil)
         @model = Sketchup.active_model
         @entities = @model.active_entities
         @project = project
-        @height = h_properties["height"].mm
-        @width = h_properties["width"]
-        @offset = h_properties["offset"]
+        @a_sources = a_sources
+        if h_properties.nil?
+          @h_properties = Hash.new
+        else
+          @h_properties = h_properties
+        end
+        @height = @h_properties["height"]
+        @width = @h_properties["width"]
+        @offset = @h_properties["offset"]
         @a_planars = Array.new
+      end
+      def activate
         
         # start undo section
         @model.start_operation("Create walls from edges", disable_ui=true) # Start of operation/undo section
         
-        a_faces = create_faces(a_edges)
-    
-        planars = planar_from_faces(@project, a_faces)
-        #@model.select_tool planar_from_faces
-        
-        @model.commit_operation # End of operation/undo section
-        @model.active_view.refresh # Refresh model
-        return planars
-        
-      end
-      def create_faces(a_edges)
+        # create source faces for the walls
+        if @height.nil?
+          @height = 2400.mm
+        else
+          @height = @height.mm
+        end
         a_faces = Array.new
-        a_edges.each do |edge|
-          bottom_start = edge.start.position
-          bottom_end = edge.end.position
-          top_start = Geom::Point3d.new(bottom_start.x, bottom_start.y, bottom_start.z + @height)
-          top_end = Geom::Point3d.new(bottom_end.x, bottom_end.y, bottom_end.z + @height)
-          begin
-            a_faces << @entities.add_face(bottom_start, bottom_end, top_end, top_start)
-          rescue
-            puts "unable to create face"
+        @a_sources.each do |source|
+        
+          # create wall object if source is a SketchUp edge
+          if source.is_a?(Sketchup::Edge)
+						bottom_start = source.start.position
+						bottom_end = source.end.position
+						top_start = Geom::Point3d.new(bottom_start.x, bottom_start.y, bottom_start.z + @height)
+						top_end = Geom::Point3d.new(bottom_end.x, bottom_end.y, bottom_end.z + @height)
+						begin
+							a_faces << @entities.add_face(bottom_start, bottom_end, top_end, top_start)
+						rescue
+							puts "unable to create face"
+						end
           end
         end
-        return a_faces
+        
+        # create planar objects from wall faces
+        
+        # require planar class
+        require "bim-tools/lib/clsPlanarElement.rb"
+        
+        # first; create objects 
+        a_faces.each do |source|
+    
+          ## create planar object if source is a SketchUp face
+          #if source.is_a?(Sketchup::Face)
+          #  # check if a BIM-Tools entity already exists for the source face
+          #  unless @project.library.source_to_bt_entity(@project, source)
+              @a_planars << ClsPlanarElement.new(@project, source, @width, @offset)
+          #  end
+          #end
+        end
+        
+        # clear the current selection to replace the selected source faces with geometry groups
+        @model.selection.clear
+    
+        # second; create geometry for the created objects, to make sure all connections are known.
+        @project.bt_entities_set_geometry(@a_planars)
+        @a_planars.each do |planar|
+    
+          # add the geometry group to the selection
+          @model.selection.add planar.geometry
+        end
+        @model.commit_operation # End of operation/undo section
+        @model.active_view.refresh # Refresh model
+        return @a_planars
+        
       end
       
       # this part could be merged with the same part in planar_from_faces
@@ -66,7 +104,7 @@ module Brewsky
         a_faces.each do |source|
     
           # check if a BIM-Tools entity already exists for the source face
-          if @project.library.source_to_bt_entity(@project, source).nil?
+          unless @project.library.source_to_bt_entity(@project, source)
             planar = ClsPlanarElement.new(@project, source)
             planar.width= @width
             planar.offset= @offset

@@ -27,6 +27,7 @@ module Brewsky
       # attr_accessor :id, :name, :description
       # when to use self.xxx?
       attr_reader :model, :guid, :name, :description, :site_guid, :site_name, :site_description, :building_guid, :building_name, :building_description, :author, :organisation_name, :organisation_description
+      attr_accessor :visible_geometry
       
       def initialize(id=nil, name=nil, description=nil)
         require 'bim-tools/lib/clsDefaultValues.rb'
@@ -75,15 +76,18 @@ module Brewsky
         
         @source_tracker = SourceTracker.new(self)
         #id=#("id") # do or do not use "project" in method names?
-        name=#("name")
-        description=#("description")
+        name=()#("name")
+        description=()#("description")
         
         # When creating a new project, check if there are any IFC entities present in the current SketchUp model
         ClsFindIfcEntities.new(self)
       
         # Create the entities observer for the new project, to auto-update the geometry
         @active_entities = Sketchup.active_model.active_entities
-        ObserverManager.add_entities_observer(@project, @active_entities)
+        Brewsky::BimTools::ObserverManager.add_entities_observer(@project, @active_entities)
+    
+        # Create the selection observer to the new model, to keep the dialog up-to-date
+        Brewsky::BimTools::ObserverManager.add_selection_observer(@project)
         
         return self
       end
@@ -102,8 +106,7 @@ module Brewsky
           unless face.deleted?
             face.edges.each do |edge|
               edge.faces.each do |face|
-                bt_entity = @lib.source_to_bt_entity(@project, face)
-                unless bt_entity.nil?
+                if bt_entity = @lib.source_to_bt_entity(@project, face)
                   to_update << bt_entity
                 end
               end
@@ -118,29 +121,6 @@ module Brewsky
         to_update.each do |bt_entity|
           bt_entity.update_geometry
         end
-      end
-      
-      # switch between source and geometry visibility
-      def toggle_geometry()
-        # start undo section
-        @model.start_operation("Toggle source/geometry", disable_ui=true) # Start of operation/undo section
-        if @visible_geometry == true
-          @visible_geometry = false
-          @model.set_attribute "bim-tools", "visible_geometry", "false"
-        else
-          @visible_geometry = true
-          @model.set_attribute "bim-tools", "visible_geometry", "true"
-        end
-        
-        @lib.entities.each do |entity|
-          unless entity.deleted?
-            entity.geometry_visibility(@visible_geometry)
-          end
-        end
-        @model.commit_operation # End of operation/undo section
-        @model.active_view.refresh # Refresh model
-        
-        # write true or false as attribute
       end
       def visible_geometry?
         return @visible_geometry
@@ -293,24 +273,24 @@ module Brewsky
         @model = Sketchup.active_model
         @entities = @model.entities
         h_guid = Hash.new
-        #a_faces = Array.new
-        #a_faces = get_all_faces(@entities, Array.new)
-        a_faces = get_active_faces
-        a_faces.each do |face|
-          if face.get_attribute "ifc", "guid"
-            bt_entity = @lib.source_to_bt_entity(self, face)
-            if bt_entity.nil?
-              guid = face.get_attribute "ifc", "guid"
-              if h_guid.has_key?(guid)
-                h_guid[guid] << face
-              else
-                h_guid[guid] = Array.new
-                h_guid[guid] << face
+        
+        # check each face in the active entities object if recovery is needed
+        @entities.each do |entity|
+          if entity.is_a?(Sketchup::Face)
+            if entity.get_attribute "ifc", "guid"
+              unless bt_entity = @lib.source_to_bt_entity(self, entity)
+                guid = entity.get_attribute "ifc", "guid"
+                if h_guid.has_key?(guid)
+                  h_guid[guid] << entity
+                else
+                  h_guid[guid] = Array.new
+                  h_guid[guid] << entity
+                end
               end
             end
           end
         end
-        #h_guid.each {|key, value| puts "#{key} is #{value}" }
+
         h_guid.each do |guid, a_faces|
           bt_entity = nil
           # find bt_entity with guid == guid
@@ -350,34 +330,23 @@ module Brewsky
         end
       end  
       
-      # recursive loop that returns an array of all faces in active_model
-      def get_all_faces(entities, a_faces)
-        entities.each do |ent|
-          if ent.is_a?(Sketchup::Group)
-            a_faces = a_faces + get_all_faces(ent.entities, a_faces)
-          elsif ent.is_a?(Sketchup::ComponentInstance)
-            a_faces = a_faces + get_all_faces(ent.definition.entities, a_faces)
-          else
-            if ent.is_a?(Sketchup::Face)
-              a_faces << ent
-            end
-          end
-        end
-        return a_faces
-      end
+      ## recursive loop that returns an array of all faces in active_model
+      #def get_all_faces(entities, a_faces)
+        #entities.each do |ent|
+          #if ent.is_a?(Sketchup::Group)
+            #a_faces = a_faces + get_all_faces(ent.entities, a_faces)
+          #elsif ent.is_a?(Sketchup::ComponentInstance)
+            #a_faces = a_faces + get_all_faces(ent.definition.entities, a_faces)
+          #else
+            #if ent.is_a?(Sketchup::Face)
+              #a_faces << ent
+            #end
+          #end
+        #end
+        #return a_faces
+      #end
       
-      # NOT recursive version, only searches in active collection!
-      def get_active_faces()
-        @model = Sketchup.active_model
-        entities = @model.active_entities
-        a_faces = Array.new
-        entities.each do |ent|
-          if ent.is_a?(Sketchup::Face)
-            a_faces << ent
-          end
-        end
-        return a_faces
-      end
+
     
       private
     
@@ -402,9 +371,6 @@ module Brewsky
           @a_entities << bt_entity
           @delay = UI.start_timer( 0.001, false ) {
             UI.stop_timer( @delay )
-            #start undo section
-            model = Sketchup.active_model
-            model.start_operation("Update BIM-Tools elements", disable_ui=true) # Start of operation/undo section
             @a_con_entities = Array.new
             @a_entities.uniq!
             
@@ -422,20 +388,19 @@ module Brewsky
                   # ? if deleted, find lost objects ???
                   if edge.deleted?
                     #scan total project for "lost" bim elements
-                  source_recovery
+										puts "edge deleted"
+										source_recovery
                   #  ClsFindIfcEntities.new(@project)
                   else
                     edge.faces.each do |face|
                       if face != bt_entity.source
-                        con_bt_entity = @project.library.source_to_bt_entity(@project, face)
-                        if con_bt_entity.nil?
+                        unless con_bt_entity = @project.library.source_to_bt_entity(@project, face)
                           
                           #scan total project for "lost" bim elements
                           ClsFindIfcEntities.new(@project)
                           
                           #after scanning, re-try adding the object
-                          con_bt_entity = @project.library.source_to_bt_entity(@project, face)
-                          unless con_bt_entity.nil?
+                          if con_bt_entity = @project.library.source_to_bt_entity(@project, face)
                             @a_con_entities << con_bt_entity
                           end
                         else
@@ -462,8 +427,9 @@ module Brewsky
               bt_entity.update_geometry
             end
             
-            model.commit_operation # End of operation/undo section
-            model.active_view.refresh # Refresh model
+            # clear array
+						@a_entities = Array.new
+            
           }
         end
       end

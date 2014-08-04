@@ -1,6 +1,6 @@
 #       clsBtUi.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -21,10 +21,17 @@ module Brewsky
     # Class BIM-Tools UI: manages UI elements
     class ClsBtUi
       def initialize(bimTools)
+        require "bim-tools/ui/toolbar.rb"
+        require 'bim-tools/ui/bt_dialog.rb'
         
         # create BIM-Tools toolbar
-        require "bim-tools/ui/toolbar.rb"
         BtToolbar.new(bimTools)
+        
+        # create the webdialog manager
+        @btDialog = Bt_dialog.new(bimTools)
+      end
+      def btDialog
+        return @btDialog
       end
     end
   end # module BimTools

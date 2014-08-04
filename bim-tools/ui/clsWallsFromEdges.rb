@@ -39,9 +39,9 @@ module Brewsky
       #action to be started on webdialog form submit
       def callback
         @dialog.webdialog.add_action_callback(@name) {|dialog, params|
-          width = 300
-          height = 2400
-          offset = 150
+          width = 300.mm
+          height = 2400.mm
+          offset = 150.mm
           selection = Sketchup.active_model.selection
           if selection.length > 0
             require "bim-tools/tools/walls_from_edges.rb"
@@ -52,14 +52,11 @@ module Brewsky
             # validate data from html form
             h_Properties = extract_data(a_form_data)
     
-    
-            a_edges = Array.new
-            selection.each do |entity|
-              if entity.is_a?(Sketchup::Edge)
-                a_edges << entity
-              end
-            end
-            bt_entities = WallsFromEdges.new(@dialog.project, a_edges, h_Properties)
+            walls_from_edges = WallsFromEdges.new(@dialog.project, selection, h_Properties)
+            
+            # the tool is not started from a toolbar so it needs to be activated.
+            bt_entities = walls_from_edges.activate
+            
           end
           self.update(bt_entities)
         }

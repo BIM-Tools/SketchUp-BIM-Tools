@@ -80,9 +80,9 @@ module Brewsky
       def common_properties_editable
       
         # if not all entities are BIM-Tools entities, return nil
-        if btEntities?.length != @selection.length
-          return nil
-        else
+#        if btEntities?.length != @selection.length
+#          return nil
+#        else
           h_common_properties = Hash.new
         
           # make a list of all common properties
@@ -120,7 +120,7 @@ module Brewsky
             end
           end
           return h_common_properties
-        end
+        #end
       end
     end
   end # module BimTools

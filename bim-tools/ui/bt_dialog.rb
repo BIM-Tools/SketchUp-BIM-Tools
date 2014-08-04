@@ -121,7 +121,9 @@ module Brewsky
           self.refresh
         }
         self.webdialog.add_action_callback("cmd_toggle_geometry") {|dialog, params|
-          @bimTools.active_BtProject.toggle_geometry()
+          require "bim-tools/tools/toggle_geometry.rb"
+          toggle_geometry = ToggleGeometry.new(@bimTools.active_BtProject)
+					Sketchup.active_model.select_tool(toggle_geometry)
         }
         self.webdialog.add_action_callback("cmd_clear") {|dialog, params|
           require "bim-tools/tools/clear_properties.rb"
@@ -135,6 +137,15 @@ module Brewsky
           content = content + section.html + "<hr />"
         end
         return html_top + content + html_bottom
+        #string = ""
+        #counter = 1
+        #file = File.new("C:/Program Files/Google/Google SketchUp 8/Plugins/bim-tools/json.html", "r")
+        #while (line = file.gets)
+        #    string = string + line
+        #    counter = counter + 1
+        #end
+        #file.close
+        #return string
       end
       def html_top
         #<link href='" + @pathname + "/bt_dialog.css' rel='stylesheet' type='text/css' />

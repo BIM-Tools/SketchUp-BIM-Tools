@@ -1,6 +1,6 @@
 #       clsIfcExport.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -185,18 +185,18 @@ module Brewsky
         @authorization = @model.get_attribute "ifc", "authorization", "The authorising person"
         
         return "ISO-10303-21;
-  HEADER;
-  FILE_DESCRIPTION (('ViewDefinition [CoordinationView]'), '2;1');
-  FILE_NAME ('" + @skpName + ".ifc', '" + @timestamp + "', ('" + @author + "'), ('" + @organization + "'), '" + @preprocessor_version + "', '" + @originating_system + "', '" + @authorization + "');
-  FILE_SCHEMA (('IFC2X3'));
-  ENDSEC;
-  DATA;
-  "
+HEADER;
+FILE_DESCRIPTION (('ViewDefinition [CoordinationView]'), '2;1');
+FILE_NAME ('" + @skpName + ".ifc', '" + @timestamp + "', ('" + @author + "'), ('" + @organization + "'), '" + @preprocessor_version + "', '" + @originating_system + "', '" + @authorization + "');
+FILE_SCHEMA (('IFC2X3'));
+ENDSEC;
+DATA;
+"
       end
       def footer
         return "ENDSEC;
-  END-ISO-10303-21;
-  "
+END-ISO-10303-21;
+"
       end
     
       # returns a length converted to m, as a string

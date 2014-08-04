@@ -1,6 +1,6 @@
 #       clear_properties.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -37,7 +37,11 @@ module Brewsky
             bt_entity = @project.library.source_to_bt_entity(@project, entity)
           end
           
-          unless bt_entity.nil?
+          if bt_entity
+				
+						# start undo section
+						@model.start_operation("Toggle source/geometry", disable_ui=true)
+        
             bt_entity.self_destruct
             #geometry = bt_entity.geometry
             #source = bt_entity.source
@@ -52,6 +56,9 @@ module Brewsky
             
             # update connecting entities
             
+						@model.commit_operation # End of operation/undo section
+						@model.active_view.refresh # Refresh model
+						@model.select_tool(nil)
           end
         end
       end

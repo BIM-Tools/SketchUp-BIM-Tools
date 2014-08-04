@@ -289,7 +289,7 @@ module Brewsky
         # "local" IFC array
         @a_Attributes = Array.new
         @a_Attributes << IfcMaterial.new(ifc_exporter, material_name).record_nr
-        @a_Attributes << layerThickness.to_mm.to_f.to_s
+        @a_Attributes << layerThickness.to_m.to_f.to_s
         @a_Attributes << ".U."
       end
     end
@@ -591,7 +591,7 @@ module Brewsky
       def get_projection(bt_entity)
         @geometry = bt_entity.geometry
         loop = nil
-        group = @geometry.entities.add_group
+        group = Sketchup.active_model.entities.add_group
         
           point = Geom::Point3d.new(0, 0, 0)
           vector = Geom::Vector3d.new(1, 0, 0)
@@ -602,25 +602,45 @@ module Brewsky
         #transform =  group.transformation.invert! * instance.transformation
       
         # copy all geometry edges to the new group
-        @geometry.entities.each do |entity|
-          if entity.is_a?(Sketchup::Edge)
-            new_start = entity.start.position.transform rotation.inverse
-            new_start.z= 0
-            new_end = entity.end.position.transform rotation.inverse
-            new_end.z= 0
-            group.entities.add_edges new_start, new_end
-          end
-        end
+        #@geometry.entities.each do |entity|
+          #if entity.is_a?(Sketchup::Edge)
+            #new_start = entity.start.position.transform rotation.inverse
+            #new_start.z= 0
+            #new_end = entity.end.position.transform rotation.inverse
+            #new_end.z= 0
+            #group.entities.add_edges new_start, new_end
+          #end
+        #end
         
-        # intersect all edges
-        faces=[]
-        group.entities.each do |entity|
-          faces << entity
-        end
-        group.entities.intersect_with false, group.transformation, group.entities, group.transformation, true, faces
+        ## intersect all edges
+        #faces=[]
+        #group.entities.each do |entity|
+          #faces << entity
+        #end
+        #group.entities.intersect_with false, group.transformation, group.entities, group.transformation, true, faces
+        
+        aEdges = Array.new
+        
+          # copy all edges that are on the x-y plane to the new group
+          @geometry.entities.each do |entity|
+            if entity.is_a?(Sketchup::Edge)
+                  new_start = entity.start.position.transform rotation.inverse
+                  new_start.z= 0
+                  new_end = entity.end.position.transform rotation.inverse
+                  new_end.z= 0
+                  
+                  edge = group.entities.add_line new_start, new_end
+                  unless edge.nil?
+                    aEdges << edge
+                  end
+            end
+          end
+
+        group.entities.intersect_with false, group.transformation, group.entities, group.transformation, true, aEdges
         
         # create all possible faces
         group.entities.each do |entity|
+          
           if entity.is_a?(Sketchup::Edge)
             entity.find_faces
           end
@@ -634,6 +654,15 @@ module Brewsky
             end
           end
         end
+        # delete unneccesary edges #twice??? not all edges removed in the first run...
+        group.entities.each do |entity|
+          if entity.is_a?(Sketchup::Edge)
+            if entity.faces.length != 1
+              entity.erase!
+            end
+          end
+        end
+        
         
         #find all outer loops of the cutting component
         group.entities.each do |entity|
