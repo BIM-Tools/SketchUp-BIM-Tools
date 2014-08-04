@@ -49,21 +49,27 @@ module Brewsky
           
         }
     
-        cmd_planar_from_selection = UI::Command.new("Creates building elements from selected faces") {
+        cmd_planars_from_selection = UI::Command.new("Creates building elements from selected faces") {
           selection = Sketchup.active_model.selection
           if selection.length > 0
-            require "bim-tools/tools/planar_from_faces.rb"
+            require "bim-tools/tools/planars_from_faces.rb"
             
-            planar_from_faces = PlanarFromFaces.new(@bimTools.active_BtProject, selection)
-            Sketchup.active_model.select_tool planar_from_faces
+            planars_from_faces = PlanarsFromFaces.new(@bimTools.active_BtProject, selection)
+            Sketchup.active_model.select_tool planars_from_faces
             
-            #planar_from_faces(@project, selection)
+            #planars_from_faces(@project, selection)
           end
         }
         
         # switch between source and geometry visibility
         cmd_toggle_geometry = UI::Command.new("Toggle between sources and geometry") {
-          @bimTools.active_BtProject.toggle_geometry()
+          require "bim-tools/tools/toggle_geometry.rb"
+          
+          toggle_geometry = ToggleGeometry.new(@bimTools.active_BtProject)
+					Sketchup.active_model.select_tool(toggle_geometry)
+					#toggle_geometry.activate
+          
+          #@bimTools.active_BtProject.toggle_geometry()
         }
         
         # Remove BIM properties from selection
@@ -80,11 +86,11 @@ module Brewsky
         # cmd_bimtools.menu_text = "Test"
         bt_toolbar = bt_toolbar.add_item cmd_bimtools
     
-        cmd_planar_from_selection.small_icon = "../images/PlanarsFromFaces_small.png"
-        cmd_planar_from_selection.large_icon = "../images/PlanarsFromFaces_large.png"
-        cmd_planar_from_selection.tooltip = "Creates building elements from selected faces"
-        cmd_planar_from_selection.status_bar_text = "Creates building elements from selected faces"
-        bt_toolbar = bt_toolbar.add_item cmd_planar_from_selection
+        cmd_planars_from_selection.small_icon = "../images/PlanarsFromFaces_small.png"
+        cmd_planars_from_selection.large_icon = "../images/PlanarsFromFaces_large.png"
+        cmd_planars_from_selection.tooltip = "Creates building elements from selected faces"
+        cmd_planars_from_selection.status_bar_text = "Creates building elements from selected faces"
+        bt_toolbar = bt_toolbar.add_item cmd_planars_from_selection
         
         cmd_toggle_geometry.small_icon = "../images/ToggleGeometry_small.png"
         cmd_toggle_geometry.large_icon = "../images/ToggleGeometry_large.png"

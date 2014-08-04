@@ -1,6 +1,6 @@
 #       clsBtLibrary.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ module Brewsky
       # use this function to check if a face/edge entity is "part" of a bt_entity
       # returns a bt_entity or nil
       def source_to_bt_entity(project, source)
-        bt_entity = nil
+        bt_entity = false
         project.library.entities.each do |ent|
           if source == ent.source # als de source voorkomt in de bt-library
             bt_entity = ent
@@ -87,8 +87,7 @@ module Brewsky
         entities.each do |entity|
         
           # test if the source object is part of a bt_entity
-          bt_entity = source_to_bt_entity(project, entity)
-          if bt_entity != nil
+          if bt_entity = source_to_bt_entity(project, entity)
             bt_entities << bt_entity
           end
         end

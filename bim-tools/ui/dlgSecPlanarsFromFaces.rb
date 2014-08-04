@@ -44,7 +44,7 @@ module Brewsky
           offset = 150
           selection = Sketchup.active_model.selection
           if selection.length > 0
-            require "bim-tools/tools/planar_from_faces.rb"
+            require "bim-tools/tools/planars_from_faces.rb"
     
             #split string into separate values
             a_form_data = split_string(params)
@@ -61,10 +61,10 @@ module Brewsky
             #end
             
             
-            planar_from_faces = PlanarFromFaces.new(@dialog.project, selection, h_Properties)
+            planars_from_faces = PlanarsFromFaces.new(@dialog.project, selection, h_Properties)
             
-            #hmmmm, should one tool need to activate an other????
-            bt_entities = planar_from_faces.activate
+            # the tool is not started from a toolbar so it needs to be activated.
+            bt_entities = planars_from_faces.activate
             
             #Sketchup.active_model.select_tool planar_from_faces
             

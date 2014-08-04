@@ -34,7 +34,7 @@ module Brewsky
         f.each_line { |line|
           
           # parse line unless the first character == # or the line is empty
-          unless line[0] == 35 || line.length == 1
+          unless line[0] == "#" || line.length == 1
             a_Value = line.split('=')
             key = a_Value[0].strip
             value = a_Value[1].strip

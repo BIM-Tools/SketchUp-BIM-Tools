@@ -1,6 +1,6 @@
 #       bim-tools_loader.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -17,13 +17,40 @@
 
 module Brewsky
   module BimTools
+    extend self
+    attr_accessor :aBtProjects, :btDialog
+    
     MAC = ( Object::RUBY_PLATFORM =~ /(darwin)/i ? true : false )
     OSX = MAC unless defined?(OSX)
     WIN = ( not MAC ) unless defined?(WIN)
     PC = WIN unless defined?(PC)
     
-    # Create a basic bim-tools object 
-    require 'bim-tools/clsBimTools.rb'
-    PLUGIN = ClsBimTools.new
+    @aBtProjects = Array.new
+    
+    require 'bim-tools/clsBtProject.rb'
+    require 'bim-tools/ui/clsBtUi.rb'
+    require 'bim-tools/lib/ObserverManager.rb'
+    
+    def active_BtProject
+      @aBtProjects.each do |btProject|
+        if btProject.model == Sketchup.active_model
+          return btProject
+        end
+      end
+    end
+    def new_BtProject
+      btProject = ClsBtProject.new
+      @aBtProjects << btProject
+    end
+
+    new_BtProject
+    
+    # start all UI elements: webdialog (?toolbar?)
+    btUi = ClsBtUi.new(self)
+    
+    # create access point to webdialog manager
+    @btDialog = btUi.btDialog
+    
+
   end # module BimTools
 end # module Brewsky

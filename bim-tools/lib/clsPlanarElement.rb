@@ -1,6 +1,6 @@
 #       clsPlanarElement.rb
 #       
-#       Copyright (C) 2012 Jan Brouwer <jan@brewsky.nl>
+#       Copyright (C) 2013 Jan Brouwer <jan@brewsky.nl>
 #       
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -25,6 +25,9 @@ module Brewsky
     class ClsPlanarElement < ClsBuildingElement
       attr_reader :element_type, :openings
       def initialize(project, face, width=nil, offset=nil, guid=nil) # profilecomponent=width, offset
+        
+        puts self.to_s + ":initialize"
+        
         @project = project
         @source = face
         @deleted = false
@@ -43,12 +46,12 @@ module Brewsky
         if width.nil?
           @width = 300.mm
         else
-          @width = width
+          @width = width.mm
         end
         if offset.nil?
           @offset = 150.mm
         else
-          @offset = offset
+          @offset = offset.mm
         end
       
         init_type
@@ -93,11 +96,9 @@ module Brewsky
       
       # create the geometry for the planar element
       def set_geometry
-        
-        # this method should be no operation by itself, but only part of other operations...
-        # so the start_operation should be re-located
-        model = Sketchup.active_model
-        model.start_operation("Create BIM-Tools geometry", disable_ui=true) # Start of operation/undo section
+      
+        puts self.to_s + ":set_geometry"
+      
         entities = Sketchup.active_model.active_entities
         self.check_source
         # do not update geometry when the planar element is in the process of beeing deleted(marked for deletion)
@@ -123,7 +124,6 @@ module Brewsky
           end
           
           #find origin
-          
           tmp_origin = @source.vertices[0].position
           zaxis = @source.normal
           t_base_plane = Geom::Transformation.new(tmp_origin, zaxis)
@@ -198,6 +198,7 @@ module Brewsky
             nLoopCount += 1
             
             aPlanesVert = Array.new
+            aPlanesSoft = Array.new
             
             # let op! als 2 vlakken gelijk zijn kan geen snijlijn worden uitgerekend!
             
@@ -209,6 +210,13 @@ module Brewsky
             
             # zoek de verticale plane voor alle edges
             loop.edges.each do |edge|# @source.outer_loop.edges.each do |edge|
+            
+              if edge.soft?
+                softness = 1
+              else
+                softness = 0
+              end
+            
               line = edge.line # line bestaat uit een array van 1 punt en 1 vector
               point = line[0] # punt op lijn
               line_vector = line[1] # 2e vector
@@ -222,7 +230,7 @@ module Brewsky
                 if con_ent != @source
                 
                   # add only bt-source-faces to array, bt-entities must not react to "normal" faces
-                  unless @project.library.source_to_bt_entity(@project, con_ent).nil?
+                  if @project.library.source_to_bt_entity(@project, con_ent)
                     a_connecting_faces << con_ent
                   end
                 end
@@ -262,9 +270,16 @@ module Brewsky
               end
               prev_edge = edge
               
-              aPlanesVert << plane# voeg toe aan array met verticale planes
+              # create a sub array that holds the softness-status of the edge and the plane
+              #aPlane = Array[plane, softness]
+              
+              aPlanesVert << plane #aPlane# voeg toe aan array met verticale planes
+              aPlanesSoft << softness
             end
-            aLoopsVertPlanes << aPlanesVert
+            
+            # Send both arrays to the loops array
+            aPlanes = Array[aPlanesVert, aPlanesSoft]
+            aLoopsVertPlanes << aPlanes #aPlanesVert
           end
           
           nLoopCount = 0
@@ -276,7 +291,10 @@ module Brewsky
           #placed here so temporary group also gets deleted
           group.entities.clear!
           
-          aLoopsVertPlanes.each do |aPlanesVert|
+          aLoopsVertPlanes.each do |aPlanes|#aPlanesVert|
+            
+            aPlanesVert = aPlanes[0]
+            aPlanesSoft = aPlanes[1]
             
             # collect the needed points for the top and bottom faces in an array
             aFacePtsTop = Array.new
@@ -286,6 +304,10 @@ module Brewsky
             i = 0
             j = aPlanesVert.length
             while i < j do
+            
+              # get softness
+              softness = aPlanesSoft[i]
+            
               plane = aPlanesVert[i]
               if i == 0
                 plane1 = aPlanesVert[j-1]
@@ -339,6 +361,16 @@ module Brewsky
               # when a face has duplicate points it cannot be created, temporary solution: skip face
               begin
                 face = group.entities.add_face pts
+                
+                if softness == 1
+                  #face.edges[1].soft = true
+                  #face.edges[3].soft = true
+                  #face.edges[1].smooth = true
+                  #face.edges[3].smooth = true
+                  face.edges[1].hidden = true
+                  face.edges[3].hidden = true
+                end
+                
                 face.material= @source.material
                 
                 #still errors
@@ -401,8 +433,6 @@ module Brewsky
         #puts opening
         #end
     
-        model.commit_operation # End of operation/undo section
-        model.active_view.refresh # Refresh model
       end
       
       # returns an array of all openings in a planar object(face-cutting instances AND normal openings(loops))
@@ -413,6 +443,7 @@ module Brewsky
         
         aLoops = Array.new
         group = @geometry.entities.add_group
+        aEdges = Array.new
         
         @source.get_glued_instances.each do |instance|
         
@@ -425,21 +456,19 @@ module Brewsky
                 if entity.end.position.z == 0
                   new_start = entity.start.position.transform transform
                   new_end = entity.end.position.transform transform
-                  group.entities.add_edges new_start, new_end
+                  
+                  edge = group.entities.add_line new_start, new_end
+                  aEdges << edge
                 end
               end
             end
           end
-        
         end
         
-        # intersect all edges
-        faces=[]
-        group.entities.each do |entity|
-          faces << entity
-        end
-        group.entities.intersect_with false, group.transformation, group.entities, group.transformation, true, faces
-        
+############### ?BUGSPLAT? #######################
+        group.entities.intersect_with false, group.transformation, group.entities, group.transformation, true, aEdges
+############### ?BUGSPLAT? #######################
+
         # create all possible faces
         group.entities.each do |entity|
           if entity.is_a?(Sketchup::Edge)
@@ -509,6 +538,9 @@ module Brewsky
         set_planes
       end
       def update_geometry
+      
+        #puts self.to_s + ":update_geometry"
+        
         set_planes
         set_geometry
         define_length
@@ -787,18 +819,26 @@ module Brewsky
             relative_error = (difference / (val > other ? val : other)).abs
             return relative_error <= relative_epsilon
           end
-          square_area = height? * length?
+          #square_area = height? * length?
           
           # if the area of the source face equals length*height the face is a square
           # exept when wall openings are present!!!
           # and probably a wallstandardcase
-          if approx(@source.area, square_area)
           
-            # if the source face vector has an Z-value of zero then the wall is a standardcase
-            # BEWARE OF NESTED COMPONENTS!
-            if @source.normal.z == 0
-              IfcWallStandardCase.new(@project, exporter, self)
-            end
+          #if approx(@source.area, square_area)
+          
+          ######################
+          #BEWARE OF NESTED COMPONENTS!
+          edges = @source.outer_loop.edges
+          
+          #puts edges.length == 4
+          #puts edges[0].line[1].parallel? edges[2].line[1]
+          #puts edges[1].line[1].parallel? edges[3].line[1]
+          #puts edges[0].line[1].perpendicular? edges[1].line[1]
+          #puts approx(@source.normal.z, 0)
+          
+          if edges.length == 4 and edges[0].line[1].parallel? edges[2].line[1] and edges[1].line[1].parallel? edges[3].line[1] and edges[0].line[1].perpendicular? edges[1].line[1] and approx(@source.normal.z, 0)
+            IfcWallStandardCase.new(@project, exporter, self)
           else
             IfcWall.new(@project, exporter, self)
           end

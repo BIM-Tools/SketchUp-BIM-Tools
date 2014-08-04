@@ -58,9 +58,6 @@ module Brewsky
         sel = @dialog.selection
         if sel.btEntities?.length == 0
           @status = false
-          return "
-    <h2>No BIM-Tools entities selected</h2>
-          "
         else
           @status = true
           return "
@@ -74,13 +71,13 @@ module Brewsky
     
     
       # update webdialog based on selected entities
-      def update(entities)
-        if entities.length == 0
+      def update(entities) # entities=selection ???
+        #if entities.length == 0
           @width = "-"
           @offset = "-"
           @volume = "-"
           @guid = "-"
-        end
+        #end
         # pas de waarde voor breedte aan!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # zoek in selectie of het een bt-object is, als dat zo is, pas de breedte daar op aan
         bt_entities = @dialog.project.library.array_remove_non_bt_entities(@dialog.project, entities)
