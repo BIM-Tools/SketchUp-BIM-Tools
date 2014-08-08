@@ -34,6 +34,10 @@ module Brewsky
         @a_planars = Array.new
       end
       def activate
+				
+				# temporarily turn off observers to prevent creating geometry multiple times
+        #t = Time.new
+				Brewsky::BimTools::ObserverManager.toggle
         
         # start undo section
         @model.start_operation("Create walls from edges", disable_ui=true) # Start of operation/undo section
@@ -90,6 +94,11 @@ module Brewsky
         end
         @model.commit_operation # End of operation/undo section
         @model.active_view.refresh # Refresh model
+        
+				# switch observers back on
+				Brewsky::BimTools::ObserverManager.toggle
+        #puts Time.new - t
+        
         return @a_planars
         
       end

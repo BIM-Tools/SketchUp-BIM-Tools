@@ -150,15 +150,17 @@ module Brewsky
         end
       end
       
+      # DEPRECATED because "toggle"tool disables observers
       # this variable is only used for the observer that checks if the source face is changed, hide/unhide is no real change.
-      def source_hidden?
-        return @source_hidden
-      end  
+      #def source_hidden?
+      #  return @source_hidden
+      #end  
       
+      # DEPRECATED because "toggle"tool disables observers
       # this variable is only used for the observer that checks if the source face is changed, hide/unhide is no real change.
-      def source_hidden=(value)
-        @source_hidden = value
-      end
+      #def source_hidden=(value)
+      #  @source_hidden = value
+      #end
     
       def set_guid
         @guid = @project.new_guid

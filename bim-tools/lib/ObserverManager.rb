@@ -247,7 +247,8 @@ module Brewsky
               # this causes way too much overhead because every object is recreated multiple times
               
                 # do not refresh geometry when only "hidden"-state is changed
-                if bt_entity.source_hidden? == bt_entity.source.hidden?
+                # DEPRECATED because "toggle"tool disables observers
+                #if bt_entity.source_hidden? == bt_entity.source.hidden?
                   
                   
                   
@@ -265,9 +266,9 @@ module Brewsky
                   # 21013 = PasteTool ???
                   # 21020 = SketchTool ???
                   
-                else
-                  bt_entity.source_hidden = bt_entity.source.hidden?
-                end
+                #else
+                #  bt_entity.source_hidden = bt_entity.source.hidden?
+                #end
               else
                 guid = entity.get_attribute "ifc", "guid"
                 unless guid.nil?
