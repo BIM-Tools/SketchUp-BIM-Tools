@@ -53,6 +53,12 @@ module Brewsky
       end
       
       def activate
+				
+				# temporarily turn off observers to prevent creating geometry multiple times
+        #t = Time.new
+				Brewsky::BimTools::ObserverManager.toggle
+				
+        # start undo section
         @model.start_operation("Create thick faces", disable_ui=true) # Start of operation/undo section
 
         # require planar class
@@ -82,6 +88,10 @@ module Brewsky
         end
         @model.commit_operation # End of operation/undo section
         @model.active_view.refresh # Refresh model
+        
+				# switch observers back on
+				Brewsky::BimTools::ObserverManager.toggle
+        #puts Time.new - t
         
         # activate select tool
         @model.select_tool(nil)
