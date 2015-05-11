@@ -7,3 +7,7 @@ That’s just what you can do with it.
 
 Draw a basic building design like you normally would using the normal sketchup tools, and "upgrade" the faces to "thick" building elements.
 Then if needed you can export your model as an IFC-file.
+
+# Installation #
+Easy install using the SketchUcation plugin store:
+http://sketchucation.com/plugin-store-free-download
